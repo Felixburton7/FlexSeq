@@ -1,6 +1,8 @@
 # Ignore model outputs and generated configs
-models/
+# models/
 output/
+/models/
+
 
 # Specific generated or temporary files
 # outputAI_context.sh
