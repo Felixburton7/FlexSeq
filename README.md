@@ -109,58 +109,58 @@ The FlexSeq pipeline follows a structured workflow managed by the `Pipeline` cla
 
 ```mermaid
 graph TD
-    A[Input: Temp-Specific CSV Data<br>(e.g., temperature_320_train.csv)] --> B(Load & Process Data);
-    B --> C[Clean Data & Feature Engineering<br>(Encoding, Normalization, Windowing)];
+    A["Input: Temp-Specific CSV Data\n(e.g., temperature_320_train.csv)"] --> B(Load & Process Data);
+    B --> C["Clean Data & Feature Engineering\n(Encoding, Normalization, Windowing)"];
     C --> D(Filter Domains);
-    D --> E{Split Data<br>(Train/Val/Test Sets<br>Stratify by Domain?)};
+    D --> E{"Split Data\n(Train/Val/Test Sets\nStratify by Domain?)"};
 
     subgraph "Model Training Pipeline"
         direction LR
-        E -- Train Set --> F[Select Enabled Models<br>(RF, NN)];
+        E -- Train Set --> F["Select Enabled Models\n(RF, NN)"];
         F --> G{Optimize Hyperparameters?};
-        G -- Yes --> H[Optimize via CV<br>(Optuna/RandomizedSearch)];
-        G -- No --> I[Train Model<br>(model.fit)];
+        G -- Yes --> H["Optimize via CV\n(Optuna/RandomizedSearch)"];
+        G -- No --> I["Train Model\n(model.fit)"];
         H --> I;
-        I --> J[Save Trained Model<br>(./models/...)];
+        I --> J["Save Trained Model\n(./models/...)"];
     end
 
     subgraph "Model Evaluation Pipeline"
         direction LR
         J --> K[Load Trained Model];
         E -- Evaluation Set (Test/Val) --> L[Prepare Eval Data];
-        K --> M[Predict on Eval Set<br>(model.predict/predict_with_std)];
+        K --> M["Predict on Eval Set\n(model.predict/predict_with_std)"];
         L --> M;
-        M --> N[Calculate Metrics<br>(utils.metrics)];
-        N --> O[Save Metrics & Results<br>(./output/outputs_T/...)];
+        M --> N["Calculate Metrics\n(utils.metrics)"];
+        N --> O["Save Metrics & Results\n(./output/outputs_T/...)"];
     end
 
     subgraph "Prediction Pipeline"
         direction LR
         P[Input: New Data CSV] --> Q(Load & Process New Data);
         J --> R[Load Trained Model];
-        Q --> S[Predict on New Data<br>(model.predict/predict_with_std)];
+        Q --> S["Predict on New Data\n(model.predict/predict_with_std)"];
         R --> S;
         S --> T[Save Predictions CSV];
     end
 
     subgraph "Analysis & Comparison"
         direction LR
-        O -- Per-Temp Results --> U[Temperature Comparison<br>(temperature.comparison)];
-        O -- Per-Temp Results --> V[Analysis & Vis Data Gen<br>(Feature Importance, etc.)];
-        U --> W[Save Comparison Data<br>(./output/outputs_comparison/)]
-        V --> X[Save Analysis CSVs & Plots<br>(./output/outputs_T/...)];
+        O -- Per-Temp Results --> U["Temperature Comparison\n(temperature.comparison)"];
+        O -- Per-Temp Results --> V["Analysis & Vis Data Gen\n(Feature Importance, etc.)"];
+        U --> W["Save Comparison Data\n(./output/outputs_comparison/)"]
+        V --> X["Save Analysis CSVs & Plots\n(./output/outputs_T/...)"];
     end
 
-    Z[Configuration File<br>(YAML, Env Vars, CLI)] --> B;
-    Z --> C;
-    Z --> D;
-    Z --> E;
-    Z --> F;
-    Z --> G;
-    Z --> L;
-    Z --> N;
-    Z --> U;
-    Z --> V;
+    Z["Configuration File\n(YAML, Env Vars, CLI)"] -.-> B;
+    Z -.-> C;
+    Z -.-> D;
+    Z -.-> E;
+    Z -.-> F;
+    Z -.-> G;
+    Z -.-> L;
+    Z -.-> N;
+    Z -.-> U;
+    Z -.-> V;
 
     style A fill:#FFDAB9,stroke:#FFA07A
     style P fill:#FFDAB9,stroke:#FFA07A
@@ -193,7 +193,7 @@ graph TD
 
 ```mermaid
 flowchart TD
-    start([🏁 Start `flexseq <command>`]) --> config[📝 Load Configuration];
+    start([🏁 Start `flexseq <command>`]) --> config["📝 Load Configuration\n(YAML + Env Var + CLI Params)"];
     config --> op{⚙️ Operation Type?};
 
     op -->|train| train_flow
@@ -204,6 +204,7 @@ flowchart TD
     op -->|compare-temperatures| compare_flow
 
     subgraph train_flow [Train Flow]
+        direction LR
         tr_start(Train) --> tr_mode{Mode?};
         tr_mode -- FlexSeq --> tr_std_feats(Use Standard Features);
         tr_mode -- OmniFlex --> tr_adv_feats(Use Advanced Features);
@@ -222,6 +223,7 @@ flowchart TD
     end
 
     subgraph eval_flow [Evaluate Flow]
+        direction LR
         ev_start(Evaluate) --> ev_mode{Mode?};
         ev_mode --> ev_temp(Select Temperature);
         ev_temp --> ev_load_data(Load & Process Data);
@@ -234,6 +236,7 @@ flowchart TD
     end
 
     subgraph predict_flow [Predict Flow]
+        direction LR
         pr_start(Predict) --> pr_mode{Mode?};
         pr_mode --> pr_temp(Select Temperature);
         pr_temp --> pr_input(Load & Process Input CSV);
@@ -244,6 +247,7 @@ flowchart TD
     end
 
     subgraph run_flow [Run Flow]
+        direction LR
         run_start(Run) --> run_train(Execute Train Flow);
         run_train --> run_eval(Execute Evaluate Flow);
         run_eval --> run_analyze(Analyze & Gen Viz Data);
@@ -251,6 +255,7 @@ flowchart TD
     end
 
      subgraph train_all_flow [Train All Temps Flow]
+        direction LR
         tat_start(Train All) --> tat_loop{For each Temp in Config};
         tat_loop -- Loop --> tat_train(Execute Train Flow for Temp);
         tat_train -- Done --> tat_loop;
@@ -258,6 +263,7 @@ flowchart TD
      end
 
      subgraph compare_flow [Compare Temps Flow]
+        direction LR
         ct_start(Compare) --> ct_load(Load Results from All Temps);
         ct_load --> ct_analyze(Compare Metrics & Predictions);
         ct_analyze --> ct_save(Save Comparison Data);
