@@ -1,3 +1,6 @@
+Okay, here is the revised `README.md` file, incorporating the accurate content from the project context and documentation into the desired style.
+
+```markdown
 # FlexSeq: Protein Flexibility Prediction Pipeline 🧬🔍
 
 <div align="center">
@@ -7,8 +10,9 @@
 [![Python Version](https://img.shields.io/badge/python-3.8%2B-blue?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
 [![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen?style=for-the-badge)](CONTRIBUTING.md)
+[![GitHub Repo](https://img.shields.io/badge/GitHub-Repo-blue?style=for-the-badge&logo=github)](https://github.com/Felixburton7/flexseq)
 
-**A comprehensive machine learning pipeline for predicting protein flexibility (RMSF) across multiple temperatures**
+**A comprehensive machine learning pipeline for predicting protein flexibility (RMSF) across multiple temperatures using sequence and structural features.**
 
 [📊 Key Features](#key-features) •
 [🔧 Installation](#installation) •
@@ -16,7 +20,10 @@
 [🔄 Pipeline Overview](#pipeline-overview) •
 [📥 Input Data](#input-data) •
 [📤 Output Data](#output-data) •
-[📈 Visualizations](#visualizations) •
+[🤖 Models](#models) •
+[📈 Analysis & Visualization](#analysis--visualization) •
+[⚙️ Configuration](#configuration) •
+[💻 Command-Line Interface](#command-line-interface) •
 [📚 Documentation](#documentation) •
 [🤝 Contributing](#contributing)
 
@@ -24,12 +31,21 @@
 
 ## 🌟 Overview
 
-FlexSeq is a machine learning pipeline for predicting protein flexibility (Root Mean Square Fluctuation, RMSF) from sequence and structural features. The pipeline supports analysis across multiple temperatures and offers two operational modes:
+FlexSeq is a machine learning pipeline meticulously designed for predicting protein flexibility, quantified as Root Mean Square Fluctuation (RMSF), based on protein sequence and structural features. A core capability of FlexSeq is its robust support for analyzing and comparing flexibility across a range of user-defined temperatures (e.g., 320K, 348K, 379K, 413K, 450K, and an averaged dataset), enabling the study of temperature-dependent dynamic behavior.
 
-- **🔬 FlexSeq Mode**: Standard prediction using protein sequence and structural features
-- **🔭 OmniFlex Mode**: Enhanced prediction incorporating ESM embeddings and 3D voxel representations
+The pipeline offers two distinct operational modes, configurable via the `mode.active` setting:
 
-The pipeline employs a modular architecture with configurable models, extensive feature engineering, and comprehensive evaluation metrics, making it suitable for a wide range of protein flexibility analysis tasks.
+-   **🔬 FlexSeq Mode**: The standard operational mode, utilizing a rich set of features derived directly from protein sequence and basic structural properties (e.g., protein size, residue position, solvent accessibility, secondary structure classification from DSSP, backbone dihedral angles φ/ψ).
+-   **🔭 OmniFlex Mode**: An enhanced prediction mode that leverages the standard features *plus* pre-computed RMSF predictions derived from external, powerful models like ESM (Evolutionary Scale Modeling) embeddings (`esm_rmsf`) and potentially 3D voxel representations (`voxel_rmsf`), aiming for improved predictive accuracy.
+
+FlexSeq employs a modular and configurable architecture, built upon Python libraries like Pandas, Scikit-learn, PyTorch, and Optuna. It features:
+*   Configurable machine learning models (Random Forest and Neural Network).
+*   Automated feature engineering, including sequence-window features and numerical encoding.
+*   Comprehensive model evaluation using a suite of standard regression metrics.
+*   Integrated hyperparameter optimization using Randomized Search (RF) or Optuna (NN).
+*   Tools for systematic comparison of results across different temperatures.
+*   Uncertainty estimation capabilities for model predictions.
+*   A flexible and user-friendly Command-Line Interface (CLI) powered by Click.
 
 ## 📊 Key Features
 
@@ -42,604 +58,464 @@ The pipeline employs a modular architecture with configurable models, extensive 
 </thead>
 <tbody>
   <tr>
-    <td>🌡️ Multi-Temperature Analysis</td>
-    <td>Predict and compare protein flexibility across different temperatures (320K-450K)</td>
+    <td>🌡️ **Multi-Temperature Analysis**</td>
+    <td>Train models, evaluate performance, and compare RMSF predictions across a user-defined list of temperatures (e.g., `[320, 348, 379, 413, 450, "average"]`).</td>
   </tr>
   <tr>
-    <td>🤖 Multiple ML Models</td>
-    <td>Random Forest and Neural Network implementations with easy extensibility</td>
+    <td>🤖 **Multiple ML Models**</td>
+    <td>Includes Random Forest (Scikit-learn) and Feed-Forward Neural Network (PyTorch) implementations. The architecture allows for easy addition of new models inheriting from `BaseModel`.</td>
   </tr>
   <tr>
-    <td>⚙️ Feature Engineering</td>
-    <td>Automatic generation of window-based features and encoding of categorical variables</td>
+    <td>⚙️ **Feature Engineering**</td>
+    <td>Automatic encoding of categorical features (residue name, core/exterior, secondary structure), normalization of angles (φ/ψ), calculation of normalized residue position, and optional generation of window-based features using neighboring residue information.</td>
   </tr>
   <tr>
-    <td>🔬 Advanced Mode (OmniFlex)</td>
-    <td>Integration with ESM embeddings and 3D voxel representations for improved accuracy</td>
+    <td>🔬 **OmniFlex Mode**</td>
+    <td>Optionally incorporates external predictions (`esm_rmsf`, `voxel_rmsf`) as input features for potentially enhanced performance. Enabled via configuration.</td>
   </tr>
   <tr>
-    <td>⚠️ Uncertainty Quantification</td>
-    <td>Models provide uncertainty estimates for predictions</td>
+    <td>⚠️ **Uncertainty Quantification**</td>
+    <td>Models provide uncertainty estimates: standard deviation across trees for Random Forest, Monte Carlo Dropout sampling for Neural Network.</td>
   </tr>
   <tr>
-    <td>📏 Comprehensive Evaluation</td>
-    <td>Multiple metrics including RMSE, MAE, R², and correlation coefficients</td>
+    <td>📏 **Comprehensive Evaluation**</td>
+    <td>Utilizes multiple metrics including RMSE, MAE, R², Pearson correlation, Spearman correlation, and Root Mean Square Absolute Error (RMSAE). Metrics are configurable.</td>
   </tr>
   <tr>
-    <td>📊 Visualizations</td>
-    <td>Extensive visualization suite for model performance and protein analysis</td>
+    <td>📊 **Analysis & Visualization**</td>
+    <td>Generates detailed output CSV files for evaluation metrics, domain-level performance, residue-level errors (by AA type, position, structure), feature importance, and cross-temperature comparisons, suitable for external visualization tools. Also generates basic plots (e.g., feature importance).</td>
+  </tr>
+   <tr>
+    <td>🧩 **Domain Stratification**</td>
+    <td>Supports data splitting (`train`/`validation`/`test`) that ensures all residues from a given protein domain are kept within the same split, preventing data leakage between sets.</td>
   </tr>
   <tr>
-    <td>🔍 Detailed Analysis</td>
-    <td>Residue-level, amino acid-specific, and domain-level analysis tools</td>
+    <td>🎯 **Hyperparameter Optimization**</td>
+    <td>Automated tuning for both models using Scikit-learn's `RandomizedSearchCV` for Random Forest and Optuna (supporting random search and Bayesian optimization) for Neural Network. Configuration allows defining search spaces and trials.</td>
   </tr>
   <tr>
-    <td>🎯 Hyperparameter Optimization</td>
-    <td>Automated tuning via grid search, random search, or Bayesian optimization</td>
+    <td>💻 **Command-Line Interface**</td>
+    <td>Provides the `flexseq` command with subcommands (`train`, `evaluate`, `predict`, `run`, `compare-temperatures`, etc.) for easy pipeline execution and control.</td>
   </tr>
-  <tr>
-    <td>💻 Command-Line Interface</td>
-    <td>Easy-to-use CLI for all pipeline operations</td>
+   <tr>
+    <td>⚙️ **Configuration System**</td>
+    <td>Highly flexible configuration via YAML (`default_config.yaml`), environment variables (prefixed `FLEXSEQ_`), and direct CLI parameter overrides (`--param`). Supports temperature templating in paths and column names.</td>
   </tr>
 </tbody>
 </table>
 
 ## 🔄 Pipeline Overview
 
-The FlexSeq pipeline follows a modular workflow designed for flexibility and extensibility:
+The FlexSeq pipeline follows a structured workflow managed by the `Pipeline` class (`flexseq/pipeline.py`), driven by the configuration settings.
+
+**Conceptual Workflow Diagram:**
 
 ```mermaid
 graph TD
-    A[Raw Protein Data] --> B[Data Loading]
-    B --> C[Feature Processing]
-    C --> D[Train/Val/Test Split]
-    D --> E[Model Training]
-    E --> F[Model Evaluation]
-    F --> G[Prediction]
-    G --> H[Analysis & Visualization]
-    
-    subgraph "Data Preparation"
-    B
-    C
-    D
+    A[Input: Temp-Specific CSV Data<br>(e.g., temperature_320_train.csv)] --> B(Load & Process Data);
+    B --> |`data.loader`, `data.processor`| C[Clean Data & Feature Engineering<br>(Encoding, Normalization, Windowing)];
+    C --> |`config.dataset.domains`| D(Filter Domains);
+    D --> |`data.processor.split_data`| E{Split Data<br>(Train/Val/Test Set<br>Stratify by Domain?)};
+
+    subgraph "Model Training Pipeline"
+    direction LR
+    E -- Train Set --> F[Select Enabled Models<br>(RF, NN)];
+    F --> G{Hyperparameter Optimization?<br>(`config.models.*.optimization`)}
+    G -- Yes --> H[Optimize via CV<br>(Optuna/RandomizedSearch)];
+    G -- No --> I[Train Model<br>(`model.fit`)];
+    H --> I;
+    I --> J[Save Trained Model<br>(`.pkl`/`.pt`)];
     end
-    
-    subgraph "Model Pipeline"
-    E
-    F
-    G
+
+    subgraph "Model Evaluation Pipeline"
+    direction LR
+    J --> K[Load Trained Model<br>(from `./models/models_{T}/`)];
+    E -- Evaluation Set (Test/Val) --> L[Prepare Eval Data];
+    K --> M[Predict on Eval Set<br>(`model.predict`/`predict_with_std`)];
+    L --> M;
+    M --> N[Calculate Metrics<br>(`utils.metrics.evaluate_predictions`)];
+    N --> O[Save Metrics & Detailed Results<br>(to `./output/outputs_{T}/`)];
     end
-    
-    subgraph "Output & Analysis"
-    H
+
+    subgraph "Prediction Pipeline"
+    direction LR
+    P[Input: New Data CSV] --> Q(Load & Process New Data);
+    J --> R[Load Trained Model];
+    Q --> S[Predict on New Data<br>(`model.predict`/`predict_with_std`)];
+    R --> S;
+    S --> T[Save Predictions CSV];
     end
-    
-    I[Configuration] --> B
-    I --> C
-    I --> D
-    I --> E
-    I --> F
-    I --> G
-    I --> H
-    
-    style A fill:#FF9966,stroke:#FF6600,stroke-width:2px
-    style B fill:#66CCFF,stroke:#0099CC,stroke-width:2px
-    style C fill:#66CCFF,stroke:#0099CC,stroke-width:2px
-    style D fill:#66CCFF,stroke:#0099CC,stroke-width:2px
-    style E fill:#99CC66,stroke:#669933,stroke-width:2px
-    style F fill:#99CC66,stroke:#669933,stroke-width:2px
-    style G fill:#99CC66,stroke:#669933,stroke-width:2px
-    style H fill:#CC99CC,stroke:#996699,stroke-width:2px
-    style I fill:#FFCC66,stroke:#FF9933,stroke-width:2px
+
+    subgraph "Analysis & Comparison"
+    direction LR
+    O -- Per-Temp Results --> U[Temperature Comparison<br>(`temperature.comparison`)];
+    O -- Per-Temp Results --> V[Analysis & Visualization Data<br>(Feature Importance, Residue Errors, etc.)];
+    U --> W[Save Comparison Data<br>(to `./output/outputs_comparison/`)]
+    V --> X[Save Analysis Data CSVs & Basic Plots<br>(to `./output/outputs_{T}/`)];
+    end
+
+    Z[Configuration File<br>(`default_config.yaml`, Overrides)]-.-> B;
+    Z-.-> C;
+    Z-.-> D;
+    Z-.-> E;
+    Z-.-> F;
+    Z-.-> G;
+    Z-.-> L;
+    Z-.-> N;
+    Z-.-> U;
+    Z-.-> V;
+
+    style A fill:#FFDAB9,stroke:#FFA07A
+    style P fill:#FFDAB9,stroke:#FFA07A
+    style B fill:#ADD8E6,stroke:#87CEEB
+    style C fill:#ADD8E6,stroke:#87CEEB
+    style D fill:#ADD8E6,stroke:#87CEEB
+    style E fill:#ADD8E6,stroke:#87CEEB
+    style F fill:#90EE90,stroke:#3CB371
+    style G fill:#FFFFE0,stroke:#F0E68C
+    style H fill:#FFEC8B,stroke:#CDAD00
+    style I fill:#90EE90,stroke:#3CB371
+    style J fill:#C1FFC1,stroke:#00CD00
+    style K fill:#FFFFE0,stroke:#F0E68C
+    style L fill:#ADD8E6,stroke:#87CEEB
+    style M fill:#FFB6C1,stroke:#FF69B4
+    style N fill:#FFB6C1,stroke:#FF69B4
+    style O fill:#DDA0DD,stroke:#BA55D3
+    style Q fill:#ADD8E6,stroke:#87CEEB
+    style R fill:#FFFFE0,stroke:#F0E68C
+    style S fill:#FFB6C1,stroke:#FF69B4
+    style T fill:#DDA0DD,stroke:#BA55D3
+    style U fill:#E6E6FA,stroke:#9370DB
+    style V fill:#E6E6FA,stroke:#9370DB
+    style W fill:#D8BFD8,stroke:#9A32CD
+    style X fill:#D8BFD8,stroke:#9A32CD
+    style Z fill:#F5F5DC,stroke:#A0522D
 ```
 
-### 🧩 Logical Flow of Operation
+### 🧩 Logical Flow of Operation (CLI Perspective)
 
 ```mermaid
-flowchart TB
-    start([🏁 Start]) --> config[📝 Load Configuration]
-    config --> mode{🔀 Select Mode}
-    mode -->|FlexSeq| std[📊 Standard Features]
-    mode -->|OmniFlex| adv[🔬 Advanced Features + ESM/Voxel]
-    
-    std --> temp[🌡️ Select Temperature]
-    adv --> temp
-    
-    temp --> data[📥 Load & Process Data]
-    data --> split[✂️ Split Data]
-    split --> train_test{🔄 Operation?}
-    
-    train_test -->|Train| model_select[🤖 Select Models]
-    model_select --> train[🏋️ Train Models]
-    train --> hp{🎯 Optimize Hyperparameters?}
-    hp -->|Yes| optimize[🔧 Hyperparameter Optimization]
-    hp -->|No| eval
-    optimize --> eval
-    
-    train_test -->|Evaluate| load_models[📂 Load Trained Models]
-    load_models --> eval[📏 Evaluate Models]
-    
-    train_test -->|Predict| best_model[🥇 Select Best Model]
-    best_model --> predict[🔮 Generate Predictions]
-    predict --> output[💾 Save Predictions]
-    
-    eval --> metrics[📊 Calculate Metrics]
-    metrics --> save_results[💾 Save Results]
-    save_results --> analyze[🔍 Analyze Results]
-    analyze --> visualize[📈 Generate Visualizations]
-    visualize --> finish([🏁 Finish])
-    
+flowchart TD
+    start([🏁 Start `flexseq <command>`]) --> config[📝 Load Configuration<br>(YAML + Env Var + CLI Params)];
+    config --> op{⚙️ Operation Type?};
+
+    op -->|train| train_flow
+    op -->|evaluate| eval_flow
+    op -->|predict| predict_flow
+    op -->|run| run_flow
+    op -->|train-all-temps| train_all_flow
+    op -->|compare-temperatures| compare_flow
+
+    subgraph train_flow [Train Flow]
+        direction LR
+        tr_start(Train) --> tr_mode{Mode?};
+        tr_mode -- FlexSeq --> tr_std_feats(Standard Features);
+        tr_mode -- OmniFlex --> tr_adv_feats(Advanced Features);
+        tr_std_feats --> tr_temp(Select Temperature);
+        tr_adv_feats --> tr_temp;
+        tr_temp --> tr_data(Load & Process Data);
+        tr_data --> tr_split(Split Data);
+        tr_split --> tr_models(Select Models);
+        tr_models --> tr_hp_check{Optimize HParams?};
+        tr_hp_check -- Yes --> tr_hp_opt(Hyperparameter Opt.);
+        tr_hp_check -- No --> tr_train(Train Models);
+        tr_hp_opt --> tr_train;
+        tr_train --> tr_save(Save Models);
+        tr_save --> tr_eval(Evaluate on Validation);
+        tr_eval --> tr_end(End Train);
+    end
+
+    subgraph eval_flow [Evaluate Flow]
+        direction LR
+        ev_start(Evaluate) --> ev_mode{Mode?};
+        ev_mode --> ev_temp(Select Temperature);
+        ev_temp --> ev_load_data(Load & Process Data);
+        ev_load_data --> ev_split(Split Data);
+        ev_split -- Eval Set --> ev_load_models(Load Models);
+        ev_load_models --> ev_predict(Generate Predictions);
+        ev_predict --> ev_metrics(Calculate Metrics);
+        ev_metrics --> ev_save(Save Results);
+        ev_save --> ev_end(End Evaluate);
+    end
+
+    subgraph predict_flow [Predict Flow]
+        direction LR
+        pr_start(Predict) --> pr_mode{Mode?};
+        pr_mode --> pr_temp(Select Temperature);
+        pr_temp --> pr_input(Load & Process Input Data);
+        pr_input --> pr_load_model(Load Best/Specified Model);
+        pr_load_model --> pr_predict(Generate Predictions);
+        pr_predict --> pr_save(Save Predictions);
+        pr_save --> pr_end(End Predict);
+    end
+
+    subgraph run_flow [Run Flow]
+        direction LR
+        run_start(Run) --> run_train(Execute Train Flow);
+        run_train --> run_eval(Execute Evaluate Flow);
+        run_eval --> run_analyze(Analyze & Gen Viz Data);
+        run_analyze --> run_end(End Run);
+    end
+
+     subgraph train_all_flow [Train All Temps Flow]
+        direction LR
+        tat_start(Train All) --> tat_loop{For each Temp in Config};
+        tat_loop -- Loop --> tat_train(Execute Train Flow for Temp);
+        tat_train -- Done --> tat_loop;
+        tat_loop -- Finished --> tat_end(End Train All);
+     end
+
+     subgraph compare_flow [Compare Temps Flow]
+        direction LR
+        ct_start(Compare) --> ct_load(Load Results from All Temps);
+        ct_load --> ct_analyze(Compare Metrics & Predictions);
+        ct_analyze --> ct_save(Save Comparison Data);
+        ct_save --> ct_end(End Compare);
+     end
+
+    tr_end --> finish([🏁 Finish])
+    ev_end --> finish
+    pr_end --> finish
+    run_end --> finish
+    tat_end --> finish
+    ct_end --> finish
+
     style start fill:#f9f9f9,stroke:#333,stroke-width:2px
     style finish fill:#f9f9f9,stroke:#333,stroke-width:2px
     style config fill:#ffcc99,stroke:#ff9933,stroke-width:2px
-    style mode fill:#ffcc99,stroke:#ff9933,stroke-width:2px
-    style std fill:#ccffcc,stroke:#66cc66,stroke-width:2px
-    style adv fill:#ccffcc,stroke:#66cc66,stroke-width:2px
-    style temp fill:#ccffcc,stroke:#66cc66,stroke-width:2px
-    style data fill:#ccffcc,stroke:#66cc66,stroke-width:2px
-    style split fill:#ccffcc,stroke:#66cc66,stroke-width:2px
-    style train_test fill:#99ccff,stroke:#3399ff,stroke-width:2px
-    style model_select fill:#ffccff,stroke:#ff99ff,stroke-width:2px
-    style train fill:#ffccff,stroke:#ff99ff,stroke-width:2px
-    style hp fill:#ffccff,stroke:#ff99ff,stroke-width:2px
-    style optimize fill:#ffccff,stroke:#ff99ff,stroke-width:2px
-    style load_models fill:#ffccff,stroke:#ff99ff,stroke-width:2px
-    style eval fill:#ffccff,stroke:#ff99ff,stroke-width:2px
-    style best_model fill:#ffccff,stroke:#ff99ff,stroke-width:2px
-    style predict fill:#ffccff,stroke:#ff99ff,stroke-width:2px
-    style output fill:#ccffff,stroke:#66cccc,stroke-width:2px
-    style metrics fill:#ccffff,stroke:#66cccc,stroke-width:2px
-    style save_results fill:#ccffff,stroke:#66cccc,stroke-width:2px
-    style analyze fill:#ccffff,stroke:#66cccc,stroke-width:2px
-    style visualize fill:#ccffff,stroke:#66cccc,stroke-width:2px
+    style op fill:#FFDAAB,stroke:#FF9933,stroke-width:2px
 ```
 
 ## 🔧 Installation
 
 ### Prerequisites
-- Python 3.8 or higher
-- pip (Python package installer)
+*   Python 3.8 or higher
+*   pip (Python package installer)
 
-### Install from PyPI
+### Install from Source (Recommended)
 ```bash
-pip install flexseq
-```
-
-### Install from Source
-```bash
+# 1. Clone the repository
 git clone https://github.com/Felixburton7/flexseq.git
 cd flexseq
+
+# 2. Install the package in editable mode
 pip install -e .
 ```
+*This installs the package such that changes to the source code are immediately reflected.*
+
+### Dependencies
+Core dependencies are managed by `setuptools` via `pyproject.toml` and `setup.py`. Key dependencies include:
+`numpy`, `pandas`, `scikit-learn`, `torch`, `pyyaml`, `click`, `matplotlib`, `seaborn`, `joblib`, `tqdm`, `optuna`.
 
 ## 🚀 Quick Start
 
+*(Run commands from the root directory: `/home/s_felix/flexseq`)*
+
 ### Basic Usage
-
 ```bash
-# Train a model at a specific temperature
-flexseq train --temperature 320
+# Train Random Forest model at 320K using default config
+flexseq train --temperature 320 --model random_forest
 
-# Evaluate the model
-flexseq evaluate --temperature 320
+# Evaluate the trained Random Forest model at 320K
+flexseq evaluate --temperature 320 --model random_forest
+# Check output in ./output/outputs_320/evaluation_results.csv
 
-# Make predictions on new data
-flexseq predict --input new_proteins.csv --temperature 320
+# Predict RMSF for new proteins at 320K using the best model
+# (Assumes new_proteins.csv is in ./data and formatted correctly)
+flexseq predict --input ./data/new_proteins.csv --temperature 320 --output ./output/new_proteins_pred_320.csv
 ```
 
 ### Advanced Usage
-
 ```bash
-# Train using OmniFlex mode (with advanced features)
-flexseq train --mode omniflex --temperature 320
+# Train Neural Network using OmniFlex mode at 348K
+# (Requires esm_rmsf column in temperature_348_train.csv)
+flexseq train --mode omniflex --temperature 348 --model neural_network
 
-# Train on all available temperatures
+# Train enabled models on all available temperatures
 flexseq train-all-temps
 
-# Run the complete pipeline (train, evaluate, analyze)
-flexseq run --temperature 320 --model random_forest
+# Run the full pipeline (train, evaluate, analyze) for 379K
+flexseq run --temperature 379
 
-# Compare results across temperatures
-flexseq compare-temperatures
+# Generate data comparing Random Forest results across all temperatures
+flexseq compare-temperatures --model random_forest
+# Check output in ./output/outputs_comparison/
 ```
 
 ## 📥 Input Data
 
-FlexSeq expects input data in CSV format with specific columns:
+FlexSeq expects temperature-specific CSV files in the data directory (`./data` by default).
 
-<table>
-<thead>
-  <tr bgcolor="#6236FF">
-    <th><span style="color:white">Column</span></th>
-    <th><span style="color:white">Description</span></th>
-    <th><span style="color:white">Required</span></th>
-    <th><span style="color:white">Example</span></th>
-  </tr>
-</thead>
-<tbody>
-  <tr>
-    <td><code>domain_id</code></td>
-    <td>Protein domain identifier</td>
-    <td>✅ Yes</td>
-    <td><code>1a0aA00</code></td>
-  </tr>
-  <tr>
-    <td><code>resid</code></td>
-    <td>Residue ID (position in chain)</td>
-    <td>✅ Yes</td>
-    <td><code>42</code></td>
-  </tr>
-  <tr>
-    <td><code>resname</code></td>
-    <td>Amino acid type</td>
-    <td>✅ Yes</td>
-    <td><code>ALA</code></td>
-  </tr>
-  <tr>
-    <td><code>rmsf_{temperature}</code></td>
-    <td>RMSF value at specified temperature</td>
-    <td>✅ Yes (for training)</td>
-    <td><code>0.835</code></td>
-  </tr>
-  <tr>
-    <td><code>protein_size</code></td>
-    <td>Total residues in protein</td>
-    <td>❌ No</td>
-    <td><code>153</code></td>
-  </tr>
-  <tr>
-    <td><code>normalized_resid</code></td>
-    <td>Position normalized to 0-1 range</td>
-    <td>❌ No</td>
-    <td><code>0.274</code></td>
-  </tr>
-  <tr>
-    <td><code>core_exterior</code></td>
-    <td>Location classification</td>
-    <td>❌ No</td>
-    <td><code>interior</code> or <code>surface</code></td>
-  </tr>
-  <tr>
-    <td><code>relative_accessibility</code></td>
-    <td>Solvent accessibility measure</td>
-    <td>❌ No</td>
-    <td><code>0.12</code></td>
-  </tr>
-  <tr>
-    <td><code>dssp</code></td>
-    <td>Secondary structure annotation</td>
-    <td>❌ No</td>
-    <td><code>H</code> (helix), <code>E</code> (sheet), <code>C</code> (coil)</td>
-  </tr>
-  <tr>
-    <td><code>phi</code>, <code>psi</code></td>
-    <td>Backbone dihedral angles</td>
-    <td>❌ No</td>
-    <td><code>-65.3</code>, <code>120.7</code></td>
-  </tr>
-</tbody>
-</table>
+*   **File Naming:** Defined by `dataset.file_pattern` in config (e.g., `temperature_320_train.csv`).
+*   **Required Columns for Training:** `domain_id`, `resid`, `resname`, `rmsf_{temperature}`.
+*   **Optional/Recommended Columns:** `protein_size`, `normalized_resid`, `core_exterior`, `relative_accessibility`, `dssp`, `phi`, `psi`.
+*   **OmniFlex Mode Columns:** `esm_rmsf` (required if `use_esm: true`), `voxel_rmsf` (required if `use_voxel: true`).
 
-### 🔬 OmniFlex Mode Additional Columns
+| Column                      | Description                                             | Type    | Example        | Notes                                       |
+| :-------------------------- | :------------------------------------------------------ | :------ | :------------- | :------------------------------------------ |
+| `domain_id`                 | Protein domain identifier                             | string  | `1a0aA00`      | Used for grouping and stratified splitting |
+| `resid`                     | Residue ID (position in chain)                        | int     | `42`           |                                             |
+| `resname`                   | 3-letter amino acid code                                | string  | `ALA`          |                                             |
+| `rmsf_{temperature}`        | **Target:** RMSF value at specified temperature       | float   | `0.835`        | e.g., `rmsf_320` for T=320K                 |
+| `protein_size`              | *Feature:* Total # residues in protein/domain         | int     | `153`          | Calculated if missing                       |
+| `normalized_resid`          | *Feature:* Residue pos. normalized to 0-1             | float   | `0.274`        | Calculated if missing                       |
+| `core_exterior`             | *Source:* Location ('interior' or 'surface')          | string  | `surface`      | Encoded to `core_exterior_encoded`        |
+| `relative_accessibility`    | *Feature:* Solvent accessibility measure              | float   | `0.65`         | Typically 0-1                               |
+| `dssp`                      | *Source:* Secondary structure (DSSP codes)            | string  | `H`, `E`, `C`  | Encoded to `secondary_structure_encoded`    |
+| `phi`, `psi`                | *Source:* Backbone dihedral angles (degrees)          | float   | `-65.3`, `120.7` | Normalized to `phi_norm`, `psi_norm`        |
+| `resname_encoded`           | *Feature:* Numerical encoding of `resname`            | int     | `1`            | Generated if `resname` present              |
+| `core_exterior_encoded`     | *Feature:* Binary encoding (0=core, 1=surface)        | int     | `1`            | Generated if `core_exterior` present        |
+| `secondary_structure_encoded`| *Feature:* Numerical encoding of `dssp` (0=H, 1=E, 2=Loop)| int| `0`            | Generated if `dssp` present                 |
+| `phi_norm`, `psi_norm`      | *Feature:* Normalized angles [-1, 1]                  | float   | `-0.36`, `0.67` | Generated if `phi`/`psi` present           |
+| `esm_rmsf`                  | *Feature (OmniFlex):* Prediction from ESM           | float   | `0.75`         | Required if `use_esm: true`               |
+| `voxel_rmsf`                | *Feature (OmniFlex):* Prediction from Voxels        | float   | `0.81`         | Required if `use_voxel: true`             |
 
-<table>
-<thead>
-  <tr bgcolor="#9966CC">
-    <th><span style="color:white">Column</span></th>
-    <th><span style="color:white">Description</span></th>
-    <th><span style="color:white">Required for OmniFlex</span></th>
-  </tr>
-</thead>
-<tbody>
-  <tr>
-    <td><code>esm_rmsf</code></td>
-    <td>Predictions from ESM embeddings</td>
-    <td>✅ Yes</td>
-  </tr>
-  <tr>
-    <td><code>voxel_rmsf</code></td>
-    <td>Predictions from 3D voxel representation</td>
-    <td>✅ Yes</td>
-  </tr>
-</tbody>
-</table>
+*The pipeline attempts data cleaning and feature generation (`flexseq/data/processor.py`). Missing optional source columns will prevent generation of derived features.*
 
 ## 📤 Output Data
 
-FlexSeq generates various output files organized in a structured directory hierarchy:
+Output files are saved to the configured `paths.output_dir` (default: `./output`), often within temperature-specific subdirectories (`outputs_{T}`).
 
-<table>
-<thead>
-  <tr bgcolor="#FF5733">
-    <th><span style="color:white">Output</span></th>
-    <th><span style="color:white">Description</span></th>
-    <th><span style="color:white">Format</span></th>
-    <th><span style="color:white">Path</span></th>
-  </tr>
-</thead>
-<tbody>
-  <tr>
-    <td>💾 Trained Models</td>
-    <td>Saved model files</td>
-    <td>Pickle (.pkl)</td>
-    <td><code>./models/models_{temperature}/{model_name}.pkl</code></td>
-  </tr>
-  <tr>
-    <td>📊 Evaluation Results</td>
-    <td>Performance metrics</td>
-    <td>CSV</td>
-    <td><code>./output/outputs_{temperature}/evaluation_results.csv</code></td>
-  </tr>
-  <tr>
-    <td>🔮 Prediction Results</td>
-    <td>Predicted RMSF values</td>
-    <td>CSV</td>
-    <td><code>./output/{input_base}_predictions_{temperature}.csv</code></td>
-  </tr>
-  <tr>
-    <td>⭐ Feature Importance</td>
-    <td>Model feature importance</td>
-    <td>CSV</td>
-    <td><code>./output/outputs_{temperature}/feature_importance/{model_name}_feature_importance.csv</code></td>
-  </tr>
-  <tr>
-    <td>🧩 Domain Analysis</td>
-    <td>Domain-level metrics</td>
-    <td>CSV</td>
-    <td><code>./output/outputs_{temperature}/domain_metrics.csv</code></td>
-  </tr>
-  <tr>
-    <td>🔍 Residue Analysis</td>
-    <td>Residue-level analysis</td>
-    <td>CSV</td>
-    <td><code>./output/outputs_{temperature}/residue_analysis/</code></td>
-  </tr>
-  <tr>
-    <td>🌡️ Temperature Comparison</td>
-    <td>Cross-temperature analysis</td>
-    <td>CSV</td>
-    <td><code>./output/outputs_comparison/</code></td>
-  </tr>
-  <tr>
-    <td>📈 Visualization Data</td>
-    <td>Data for external visualization</td>
-    <td>CSV</td>
-    <td><code>./output/outputs_{temperature}/visualization_data/</code></td>
-  </tr>
-</tbody>
-</table>
+| Output Type                 | Description                                             | Format | Default Path (`T`=temperature)                      |
+| :-------------------------- | :------------------------------------------------------ | :----- | :-------------------------------------------------- |
+| 💾 **Trained Models**       | Saved state of trained models                           | `.pkl` | `./models/models_{T}/{model_name}.pkl`              |
+| 📊 **Evaluation Metrics**   | Summary of performance metrics for each model           | CSV    | `./output/outputs_{T}/evaluation_results.csv`     |
+| 📈 **Detailed Results**     | Eval data + predictions + errors + uncertainty        | CSV    | `./output/outputs_{T}/all_results.csv`            |
+| 🧩 **Domain Metrics**        | Performance metrics aggregated per domain               | CSV    | `./output/outputs_{T}/domain_metrics.csv`         |
+| 🔮 **Predictions**          | Predictions on new input data                           | CSV    | `./output/{input_base}_predictions_{T}.csv`       |
+| ⭐ **Feature Importance**   | Importance scores for each feature per model            | CSV, PNG| `./output/outputs_{T}/feature_importance/`        |
+| 🧬 **Residue Analysis**     | Data for error analysis by AA, position, structure    | CSV, PNG| `./output/outputs_{T}/residue_analysis/`          |
+| 🌡️ **Temp Comparison**     | Combined results and metrics across temperatures        | CSV    | `./output/outputs_comparison/`                    |
+| 📉 **Training History (NN)**| Epoch-wise loss/metrics for Neural Network              | CSV, PNG| `./output/outputs_{T}/training_performance/`      |
+| 📊 **Visualization Data**   | Pre-formatted data for generating plots externally      | CSV    | `./output/outputs_{T}/visualization_data/`        |
 
 ## 🤖 Models
 
-FlexSeq includes two primary model implementations with different strengths:
+FlexSeq implements Random Forest and Neural Network models, configurable in the `models` section of the config YAML.
 
-<table>
-<thead>
-  <tr bgcolor="#009688">
-    <th><span style="color:white">Model</span></th>
-    <th><span style="color:white">Description</span></th>
-    <th><span style="color:white">Key Parameters</span></th>
-    <th><span style="color:white">Uncertainty</span></th>
-  </tr>
-</thead>
-<tbody>
-  <tr>
-    <td>🌲 Random Forest</td>
-    <td>Ensemble of decision trees providing robust predictions with lower risk of overfitting</td>
-    <td>
-      • <code>n_estimators</code>: Number of trees<br>
-      • <code>max_depth</code>: Maximum tree depth<br>
-      • <code>max_features</code>: Feature subset size
-    </td>
-    <td>Variance across tree predictions</td>
-  </tr>
-  <tr>
-    <td>🧠 Neural Network</td>
-    <td>Feedforward neural network capable of learning complex non-linear relationships</td>
-    <td>
-      • <code>hidden_layers</code>: Layer sizes<br>
-      • <code>activation</code>: Activation function<br>
-      • <code>dropout</code>: Regularization rate<br>
-      • <code>learning_rate</code>: Optimizer learning rate
-    </td>
-    <td>Monte Carlo dropout sampling</td>
-  </tr>
-</tbody>
-</table>
+| Model             | Implementation             | Key Config Parameters (`models.{name}.*`)                                                                                                | Uncertainty Method               | Hyperparameter Optimization      |
+| :---------------- | :------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------- | :----------------------------- |
+| 🌲 **Random Forest** | `RandomForestModel`        | `n_estimators`, `max_depth`, `min_samples_split`, `min_samples_leaf`, `max_features`, `bootstrap`, `randomized_search` (uses Scikit-learn's `RandomizedSearchCV`) | Variance across tree predictions | `RandomizedSearchCV` (built-in)|
+| 🧠 **Neural Network**| `NeuralNetworkModel`       | `architecture` (`hidden_layers`, `activation`, `dropout`), `training` (`optimizer`, `learning_rate`, `batch_size`, `epochs`, `early_stopping`), `hyperparameter_optimization` (uses Optuna) | Monte Carlo Dropout sampling   | Optuna (Bayesian/Random/Grid)  |
 
-## 📈 Visualizations
+*   See `flexseq/models/base.py` for the base class definition.
+*   Model parameters and optimization settings are highly configurable (see `default_config.yaml`).
 
-FlexSeq generates a comprehensive set of visualizations for model analysis and protein flexibility interpretation:
+## 📈 Analysis & Visualization
 
-<table>
-<thead>
-  <tr bgcolor="#3F51B5">
-    <th><span style="color:white">Visualization</span></th>
-    <th><span style="color:white">Description</span></th>
-    <th><span style="color:white">Format</span></th>
-  </tr>
-</thead>
-<tbody>
-  <tr>
-    <td>📊 R² Comparison</td>
-    <td>Comparison of R² scores across models</td>
-    <td>PNG, CSV</td>
-  </tr>
-  <tr>
-    <td>📏 Residue-level RMSF</td>
-    <td>RMSF profiles along protein sequence</td>
-    <td>PNG, CSV</td>
-  </tr>
-  <tr>
-    <td>🧪 Amino Acid Error Analysis</td>
-    <td>Error distribution by amino acid type</td>
-    <td>PNG, CSV</td>
-  </tr>
-  <tr>
-    <td>📦 Error Boxplots</td>
-    <td>Error distribution boxplots by amino acid</td>
-    <td>PNG, CSV</td>
-  </tr>
-  <tr>
-    <td>🔄 Scatter Plots</td>
-    <td>Predicted vs actual RMSF values</td>
-    <td>PNG, CSV</td>
-  </tr>
-  <tr>
-    <td>🌫️ Density Contour Plots</td>
-    <td>Density-based visualization of predictions</td>
-    <td>PNG, CSV</td>
-  </tr>
-  <tr>
-    <td>⭐ Feature Importance</td>
-    <td>Feature importance bar charts</td>
-    <td>PNG, CSV</td>
-  </tr>
-  <tr>
-    <td>🌡️ Temperature Comparison</td>
-    <td>RMSF trends across temperatures</td>
-    <td>PNG, CSV</td>
-  </tr>
-  <tr>
-    <td>🔄 Dihedral Angle Analysis</td>
-    <td>Flexibility in dihedral angle space</td>
-    <td>PNG, CSV</td>
-  </tr>
-  <tr>
-    <td>🧬 Secondary Structure Analysis</td>
-    <td>RMSF by secondary structure type</td>
-    <td>PNG, CSV</td>
-  </tr>
-  <tr>
-    <td>🔥 Error Response Surface</td>
-    <td>2D heatmap of error by position and structure</td>
-    <td>PNG, CSV</td>
-  </tr>
-</tbody>
-</table>
+The pipeline focuses on generating structured CSV data to facilitate detailed analysis and external visualization, complementing the basic plots it generates directly.
 
-### 📊 Example Visualizations
+**Generated Data/Plots Enable Analysis Of:**
+*   **Overall Performance:** R², RMSE, MAE comparisons between models and across temperatures.
+*   **Prediction Accuracy:** Scatter plots of Actual vs. Predicted RMSF, optionally with density contours or colored by residue properties.
+*   **Error Analysis:** Distribution of errors (absolute, relative) grouped by amino acid type, secondary structure, sequence position, or surface exposure.
+*   **Feature Contributions:** Ranked list/bar chart of feature importances (using permutation importance).
+*   **Temperature Dependence:** Correlation of RMSF values between temperatures, trends of metrics vs. temperature, linear regression of RMSF change per residue.
+*   **Model Behavior:** RMSF profiles along the sequence for specific domains, training/validation curves for Neural Networks.
 
-<div align="center">
-<img src="docs/images/visualization_examples.png" alt="Example Visualizations" width="800"/>
-</div>
+*Refer to `flexseq/utils/visualization.py` for the functions generating plot data and basic plots.*
 
 ## ⚙️ Configuration
 
-FlexSeq uses a YAML-based configuration system with support for overrides via environment variables and command-line parameters.
+Pipeline behavior is controlled via YAML configuration files.
 
-Key configuration sections include:
+*   **Default:** `default_config.yaml` (packaged with the library).
+*   **User:** Specify a custom YAML via `flexseq <command> --config path/to/my_config.yaml`.
+*   **Overrides:**
+    *   **Environment Variables:** Prefix with `FLEXSEQ_`, use underscores for nesting (e.g., `FLEXSEQ_MODELS_RANDOM_FOREST_N_ESTIMATORS=500`).
+    *   **CLI Parameters:** Use `--param key=value` (e.g., `--param dataset.split.test_size=0.25`). CLI overrides take highest precedence.
 
-- **📁 Paths**: Data, output, and model directories
-- **🔄 Mode**: FlexSeq or OmniFlex
-- **🌡️ Temperature**: Current and available temperatures
-- **📊 Dataset**: Data loading, filtering, and feature configuration
-- **🤖 Models**: Model-specific parameters and hyperparameter optimization settings
-- **📏 Evaluation**: Metrics and comparison settings
-- **🔍 Analysis**: Visualization and analysis options
-
-Example:
-
+**Example Snippet (`default_config.yaml`):**
 ```yaml
 # FlexSeq Configuration
+
 paths:
-  data_dir: ./data
-  output_dir: ./output
-  models_dir: ./models
+  data_dir: ./data                # Data directory
+  output_dir: ./output            # Output directory
+  models_dir: ./models            # Saved models directory
 
 mode:
-  active: "flexseq"  # "flexseq" or "omniflex"
+  active: "omniflex"              # Using advanced mode ("flexseq" or "omniflex")
   omniflex:
-    use_esm: true
-    use_voxel: true
+    use_esm: true                 # Use ESM embeddings feature
+    use_voxel: false              # Enable 3D voxel feature (if available)
 
 temperature:
-  current: 320
-  available: [320, 348, 379, 413, 450, "average"]
+  current: 348                    # Current temperature to process
+  available: [320, 348, 379, 413, 450, "average"] # Available datasets
+
+dataset:
+  file_pattern: "temperature_{temperature}_train.csv" # How to find data files
+  features:
+    use_features:                 # Features to use as model input
+      protein_size: true
+      normalized_resid: true
+      relative_accessibility: true
+      core_exterior_encoded: true
+      secondary_structure_encoded: true
+      phi_norm: true
+      psi_norm: true
+      resname_encoded: true
+      esm_rmsf: true              # OmniFlex only
+      voxel_rmsf: false           # OmniFlex only
+    window:                       # Window feature settings
+      enabled: true
+      size: 5                     # Window = size*2 + 1 residues
+  target: rmsf_{temperature}      # Target variable column name
+  split:
+    test_size: 0.2
+    validation_size: 0.15
+    stratify_by_domain: true      # Keep domains together during split
 
 models:
   random_forest:
     enabled: true
-    n_estimators: 100
-    max_depth: null
+    n_estimators: 500
     max_features: 0.7
+    randomized_search:            # Hyperparameter optimization settings
+      enabled: true
+      n_iter: 50
+      cv: 5
+      param_distributions:        # Search space
+        n_estimators: [100, 200, 300, 500, 800]
+        # ... other parameters
+  neural_network:
+    enabled: true
+    architecture:
+      hidden_layers: [256, 128, 64]
+    # ... other NN parameters and optimization settings
 ```
+*Refer to the full `default_config.yaml` for all options.*
 
 ## 💻 Command-Line Interface
 
-FlexSeq provides a comprehensive CLI for all pipeline operations:
+The `flexseq` command provides structured access to pipeline functions.
 
-<table>
-<thead>
-  <tr bgcolor="#FF9800">
-    <th><span style="color:white">Command</span></th>
-    <th><span style="color:white">Description</span></th>
-    <th><span style="color:white">Example</span></th>
-  </tr>
-</thead>
-<tbody>
-  <tr>
-    <td>🏋️ <code>train</code></td>
-    <td>Train flexibility prediction models</td>
-    <td><code>flexseq train --temperature 320</code></td>
-  </tr>
-  <tr>
-    <td>📏 <code>evaluate</code></td>
-    <td>Evaluate trained models</td>
-    <td><code>flexseq evaluate --model random_forest</code></td>
-  </tr>
-  <tr>
-    <td>🔮 <code>predict</code></td>
-    <td>Generate predictions for new data</td>
-    <td><code>flexseq predict --input new_proteins.csv</code></td>
-  </tr>
-  <tr>
-    <td>🌡️ <code>train-all-temps</code></td>
-    <td>Train models on all available temperatures</td>
-    <td><code>flexseq train-all-temps</code></td>
-  </tr>
-  <tr>
-    <td>📊 <code>compare-temperatures</code></td>
-    <td>Compare results across temperatures</td>
-    <td><code>flexseq compare-temperatures</code></td>
-  </tr>
-  <tr>
-    <td>🔧 <code>preprocess</code></td>
-    <td>Preprocess data without training</td>
-    <td><code>flexseq preprocess --input raw_data.csv</code></td>
-  </tr>
-  <tr>
-    <td>🚀 <code>run</code></td>
-    <td>Run the complete pipeline</td>
-    <td><code>flexseq run --mode omniflex</code></td>
-  </tr>
-  <tr>
-    <td>📋 <code>list-models</code></td>
-    <td>List available models</td>
-    <td><code>flexseq list-models</code></td>
-  </tr>
-  <tr>
-    <td>📋 <code>list-temperatures</code></td>
-    <td>List available temperatures</td>
-    <td><code>flexseq list-temperatures</code></td>
-  </tr>
-</tbody>
-</table>
+| Command                 | Description                                              | Example                                              |
+| :---------------------- | :------------------------------------------------------- | :--------------------------------------------------- |
+| `train`                 | Train models for a specific temperature.                 | `flexseq train --temp 320 --model random_forest`     |
+| `evaluate`              | Evaluate trained models.                                 | `flexseq evaluate --temp 320 --model random_forest`  |
+| `predict`               | Generate predictions for new input data.                 | `flexseq predict --input new.csv --temp 320`         |
+| `run`                   | Execute the full train, evaluate, analyze pipeline.      | `flexseq run --temp 348 --mode omniflex`             |
+| `train-all-temps`       | Train models for all temperatures in `temperature.available`. | `flexseq train-all-temps`                            |
+| `compare-temperatures`  | Generate data comparing results across temperatures.     | `flexseq compare-temperatures --model random_forest` |
+| `preprocess`            | Only load, clean, and process data; save output.       | `flexseq preprocess --input raw.csv --out proc.csv`  |
+| `list-models`           | List registered model names.                             | `flexseq list-models`                                |
+| `list-temperatures`     | List temperatures defined in the configuration.          | `flexseq list-temperatures`                          |
+
+**Common Options:** `--temperature` (`--temp`), `--model`, `--config`, `--param`, `--mode`, `--input`, `--output`. Use `flexseq <command> --help` for details.
 
 ## 📚 Documentation
 
-For complete documentation, visit the [FlexSeq Documentation](https://flexseq.readthedocs.io/).
-
-- 📥 [Installation Guide](https://flexseq.readthedocs.io/en/latest/installation.html)
-- 📖 [User Guide](https://flexseq.readthedocs.io/en/latest/user_guide.html)
-- 🔍 [API Reference](https://flexseq.readthedocs.io/en/latest/api.html)
-- 💡 [Examples](https://flexseq.readthedocs.io/en/latest/examples.html)
-- 🤝 [Contributing](https://flexseq.readthedocs.io/en/latest/contributing.html)
+*(Placeholder links - adapt if full documentation exists)*
+*   [Installation Guide](https://flexseq.readthedocs.io/en/latest/installation.html)
+*   [User Guide](https://flexseq.readthedocs.io/en/latest/user_guide.html)
+*   [API Reference](https://flexseq.readthedocs.io/en/latest/api.html)
+*   [Examples](https://flexseq.readthedocs.io/en/latest/examples.html)
 
 ## 📝 Citation
 
-If you use FlexSeq in your research, please cite:
-
+If you use FlexSeq in your research, please cite the repository:
 ```bibtex
 @software{burton2023flexseq,
   author = {Burton, Felix},
@@ -651,13 +527,14 @@ If you use FlexSeq in your research, please cite:
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please check out our [contribution guidelines](CONTRIBUTING.md) for details on how to get started.
+Contributions are welcome! Please follow standard GitHub practices (fork, feature branch, pull request) or refer to the `CONTRIBUTING.md` file if present.
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License. See the `LICENSE` file for details.
 
 ## 👏 Acknowledgements
 
-- 🧪 This project was developed by Felix Burton ([@Felixburton7](https://github.com/Felixburton7))
-- 🙏 Special thanks to contributors and the computational biology community
+*   Developed by Felix Burton ([@Felixburton7](https://github.com/Felixburton7)).
+*   Utilizes numerous open-source libraries including Scikit-learn, PyTorch, Pandas, NumPy, Matplotlib, Seaborn, Click, PyYAML, TQDM, Joblib, and Optuna.
+```
