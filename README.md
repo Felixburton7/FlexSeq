@@ -1,6 +1,4 @@
-Okay, here is the revised `README.md` file, incorporating the accurate content from the project context and documentation into the desired style.
 
-```markdown
 # FlexSeq: Protein Flexibility Prediction Pipeline 🧬🔍
 
 <div align="center">
