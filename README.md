@@ -103,69 +103,185 @@ FlexSeq employs a modular and configurable architecture, built upon Python libra
 
 ## 🔄 Pipeline Overview
 
-The FlexSeq pipeline orchestrates data processing, model training, evaluation, and analysis through a command-line interface, guided by a flexible configuration system.
+The FlexSeq pipeline follows a structured workflow managed by the `Pipeline` class (`flexseq/pipeline.py`), driven by the configuration settings.
 
-**High-Level Workflow:**
+**Conceptual Workflow Diagram:**
 
 ```mermaid
-graph LR
-    A[Start: User runs `flexseq <command>`] --> B(Load Configuration);
-    B --> C{Select Temperature & Mode};
-    C --> D[Load & Process Data\n(Filtering, Features, Windowing)];
-    D --> E[Split Data\n(Train/Val/Test)];
+graph TD
+    A["Input: Temp-Specific CSV Data\n(e.g., temperature_320_train.csv)"] --> B(Load & Process Data);
+    B --> C["Clean Data & Feature Engineering\n(Encoding, Normalization, Windowing)"];
+    C --> D(Filter Domains);
+    D --> E{"Split Data\n(Train/Val/Test Sets\nStratify by Domain?)"};
 
-    subgraph Task Execution
-        direction TB
-        E --> F{Command?};
-        F -- train --> G[Train Models\n(Optional HP Opt)];
-        F -- evaluate --> H[Load Models & Evaluate];
-        F -- predict --> I[Load Model & Predict New Data];
-        F -- run --> J[Train -> Evaluate -> Analyze];
-        F -- compare-temperatures --> K[Load Multi-Temp Results & Compare];
+    subgraph "Model Training Pipeline"
+        direction LR
+        E -- Train Set --> F["Select Enabled Models\n(RF, NN)"];
+        F --> G{Optimize Hyperparameters?};
+        G -- Yes --> H["Optimize via CV\n(Optuna/RandomizedSearch)"];
+        G -- No --> I["Train Model\n(model.fit)"];
+        H --> I;
+        I --> J["Save Trained Model\n(./models/...)"];
     end
 
-    G --> L[Save Models];
-    H --> M[Save Evaluation Results];
-    I --> N[Save Predictions];
-    J --> L;
-    J --> M;
-    J --> O[Generate Analysis Data];
-    K --> P[Save Comparison Data];
-    M --> O;
-    O --> End[🏁 Outputs Generated];
-    N --> End;
-    P --> End;
-    L --> End;
+    subgraph "Model Evaluation Pipeline"
+        direction LR
+        J --> K[Load Trained Model];
+        E -- Evaluation Set (Test/Val) --> L[Prepare Eval Data];
+        K --> M["Predict on Eval Set\n(model.predict/predict_with_std)"];
+        L --> M;
+        M --> N["Calculate Metrics\n(utils.metrics)"];
+        N --> O["Save Metrics & Results\n(./output/outputs_T/...)"];
+    end
 
+    subgraph "Prediction Pipeline"
+        direction LR
+        P[Input: New Data CSV] --> Q(Load & Process New Data);
+        J --> R[Load Trained Model];
+        Q --> S["Predict on New Data\n(model.predict/predict_with_std)"];
+        R --> S;
+        S --> T[Save Predictions CSV];
+    end
 
-    style A fill:#f9f,stroke:#333,stroke-width:2px
-    style B fill:#ccf,stroke:#333,stroke-width:2px
-    style C fill:#ccf,stroke:#333,stroke-width:2px
-    style D fill:#aea,stroke:#333,stroke-width:2px
-    style E fill:#aea,stroke:#333,stroke-width:2px
-    style F fill:#fcc,stroke:#333,stroke-width:2px
-    style G fill:#9cf,stroke:#333,stroke-width:2px
-    style H fill:#9cf,stroke:#333,stroke-width:2px
-    style I fill:#9cf,stroke:#333,stroke-width:2px
-    style J fill:#9cf,stroke:#333,stroke-width:2px
-    style K fill:#9cf,stroke:#333,stroke-width:2px
-    style L fill:#ffc,stroke:#333,stroke-width:2px
-    style M fill:#ffc,stroke:#333,stroke-width:2px
-    style N fill:#ffc,stroke:#333,stroke-width:2px
-    style O fill:#ffc,stroke:#333,stroke-width:2px
-    style P fill:#ffc,stroke:#333,stroke-width:2px
-    style End fill:#f9f,stroke:#333,stroke-width:2px
+    subgraph "Analysis & Comparison"
+        direction LR
+        O -- Per-Temp Results --> U["Temperature Comparison\n(temperature.comparison)"];
+        O -- Per-Temp Results --> V["Analysis & Vis Data Gen\n(Feature Importance, etc.)"];
+        U --> W["Save Comparison Data\n(./output/outputs_comparison/)"]
+        V --> X["Save Analysis CSVs & Plots\n(./output/outputs_T/...)"];
+    end
+
+    Z["Configuration File\n(YAML, Env Vars, CLI)"] -.-> B;
+    Z -.-> C;
+    Z -.-> D;
+    Z -.-> E;
+    Z -.-> F;
+    Z -.-> G;
+    Z -.-> L;
+    Z -.-> N;
+    Z -.-> U;
+    Z -.-> V;
+
+    style A fill:#FFDAB9,stroke:#FFA07A
+    style P fill:#FFDAB9,stroke:#FFA07A
+    style B fill:#ADD8E6,stroke:#87CEEB
+    style C fill:#ADD8E6,stroke:#87CEEB
+    style D fill:#ADD8E6,stroke:#87CEEB
+    style E fill:#ADD8E6,stroke:#87CEEB
+    style F fill:#90EE90,stroke:#3CB371
+    style G fill:#FFFFE0,stroke:#F0E68C
+    style H fill:#FFEC8B,stroke:#CDAD00
+    style I fill:#90EE90,stroke:#3CB371
+    style J fill:#C1FFC1,stroke:#00CD00
+    style K fill:#FFFFE0,stroke:#F0E68C
+    style L fill:#ADD8E6,stroke:#87CEEB
+    style M fill:#FFB6C1,stroke:#FF69B4
+    style N fill:#FFB6C1,stroke:#FF69B4
+    style O fill:#DDA0DD,stroke:#BA55D3
+    style Q fill:#ADD8E6,stroke:#87CEEB
+    style R fill:#FFFFE0,stroke:#F0E68C
+    style S fill:#FFB6C1,stroke:#FF69B4
+    style T fill:#DDA0DD,stroke:#BA55D3
+    style U fill:#E6E6FA,stroke:#9370DB
+    style V fill:#E6E6FA,stroke:#9370DB
+    style W fill:#D8BFD8,stroke:#9A32CD
+    style X fill:#D8BFD8,stroke:#9A32CD
+    style Z fill:#F5F5DC,stroke:#A0522D
 ```
 
-*   **Configuration:** Reads settings from `default_config.yaml`, environment variables (`FLEXSEQ_*`), and CLI arguments (`--param`, `--temperature`, `--mode`).
-*   **Data Handling:** Loads temperature-specific CSVs, cleans data, applies feature engineering (encodings, normalization, window features), filters domains, and splits into train/validation/test sets (optionally stratified by domain).
-*   **Task Execution:** Based on the CLI command (`train`, `evaluate`, `predict`, `run`, `compare-temperatures`):
-    *   **Train:** Selects models, optionally performs hyperparameter optimization, trains on the training set, evaluates on the validation set, and saves the trained models.
-    *   **Evaluate:** Loads pre-trained models, makes predictions on the specified evaluation set (test or validation), calculates metrics, and saves detailed results.
-    *   **Predict:** Loads a specified (or best) model, processes new input data, generates predictions (optionally with uncertainty), and saves the output.
-    *   **Run:** Executes the train, evaluate, and analysis steps sequentially.
-    *   **Compare:** Loads results from multiple temperature runs and generates comparative analysis data.
-*   **Outputs:** Saves models, evaluation metrics, detailed prediction results, analysis data (feature importance, residue/domain metrics), and comparison data to configured directories.
+### 🧩 Logical Flow of Operation (CLI Perspective)
+
+```mermaid
+flowchart TD
+    start([🏁 Start `flexseq <command>`]) --> config["📝 Load Configuration\n(YAML + Env Var + CLI Params)"];
+    config --> op{⚙️ Operation Type?};
+
+    op -->|train| train_flow
+    op -->|evaluate| eval_flow
+    op -->|predict| predict_flow
+    op -->|run| run_flow
+    op -->|train-all-temps| train_all_flow
+    op -->|compare-temperatures| compare_flow
+
+    subgraph train_flow [Train Flow]
+        direction LR
+        tr_start(Train) --> tr_mode{Mode?};
+        tr_mode -- FlexSeq --> tr_std_feats(Use Standard Features);
+        tr_mode -- OmniFlex --> tr_adv_feats(Use Advanced Features);
+        tr_std_feats --> tr_temp(Select Temperature);
+        tr_adv_feats --> tr_temp;
+        tr_temp --> tr_data(Load & Process Data);
+        tr_data --> tr_split(Split Data);
+        tr_split --> tr_models(Select Models);
+        tr_models --> tr_hp_check{Optimize HParams?};
+        tr_hp_check -- Yes --> tr_hp_opt(Hyperparameter Opt.);
+        tr_hp_check -- No --> tr_train(Train Models);
+        tr_hp_opt --> tr_train;
+        tr_train --> tr_save(Save Models);
+        tr_save --> tr_eval(Evaluate on Validation Set);
+        tr_eval --> tr_end(End Train);
+    end
+
+    subgraph eval_flow [Evaluate Flow]
+        direction LR
+        ev_start(Evaluate) --> ev_mode{Mode?};
+        ev_mode --> ev_temp(Select Temperature);
+        ev_temp --> ev_load_data(Load & Process Data);
+        ev_load_data --> ev_split(Split Data);
+        ev_split -- Eval Set --> ev_load_models(Load Models);
+        ev_load_models --> ev_predict(Generate Predictions);
+        ev_predict --> ev_metrics(Calculate Metrics);
+        ev_metrics --> ev_save(Save Results);
+        ev_save --> ev_end(End Evaluate);
+    end
+
+    subgraph predict_flow [Predict Flow]
+        direction LR
+        pr_start(Predict) --> pr_mode{Mode?};
+        pr_mode --> pr_temp(Select Temperature);
+        pr_temp --> pr_input(Load & Process Input CSV);
+        pr_input --> pr_load_model(Load Model);
+        pr_load_model --> pr_predict(Generate Predictions);
+        pr_predict --> pr_save(Save Output CSV);
+        pr_save --> pr_end(End Predict);
+    end
+
+    subgraph run_flow [Run Flow]
+        direction LR
+        run_start(Run) --> run_train(Execute Train Flow);
+        run_train --> run_eval(Execute Evaluate Flow);
+        run_eval --> run_analyze(Analyze & Gen Viz Data);
+        run_analyze --> run_end(End Run);
+    end
+
+     subgraph train_all_flow [Train All Temps Flow]
+        direction LR
+        tat_start(Train All) --> tat_loop{For each Temp in Config};
+        tat_loop -- Loop --> tat_train(Execute Train Flow for Temp);
+        tat_train -- Done --> tat_loop;
+        tat_loop -- Finished --> tat_end(End Train All);
+     end
+
+     subgraph compare_flow [Compare Temps Flow]
+        direction LR
+        ct_start(Compare) --> ct_load(Load Results from All Temps);
+        ct_load --> ct_analyze(Compare Metrics & Predictions);
+        ct_analyze --> ct_save(Save Comparison Data);
+        ct_save --> ct_end(End Compare);
+     end
+
+    tr_end --> finish([🏁 Finish])
+    ev_end --> finish
+    pr_end --> finish
+    run_end --> finish
+    tat_end --> finish
+    ct_end --> finish
+
+    style start fill:#f9f9f9,stroke:#333,stroke-width:2px
+    style finish fill:#f9f9f9,stroke:#333,stroke-width:2px
+    style config fill:#ffcc99,stroke:#ff9933,stroke-width:2px
+    style op fill:#FFDAAB,stroke:#FF9933,stroke-width:2px
+```
 
 ## 🔧 Installation
 
