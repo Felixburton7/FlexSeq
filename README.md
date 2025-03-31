@@ -1,4 +1,3 @@
-
 # FlexSeq: Protein Flexibility Prediction Pipeline 🧬🔍
 
 <div align="center">
@@ -111,57 +110,57 @@ The FlexSeq pipeline follows a structured workflow managed by the `Pipeline` cla
 ```mermaid
 graph TD
     A[Input: Temp-Specific CSV Data<br>(e.g., temperature_320_train.csv)] --> B(Load & Process Data);
-    B --> |`data.loader`, `data.processor`| C[Clean Data & Feature Engineering<br>(Encoding, Normalization, Windowing)];
-    C --> |`config.dataset.domains`| D(Filter Domains);
-    D --> |`data.processor.split_data`| E{Split Data<br>(Train/Val/Test Set<br>Stratify by Domain?)};
+    B --> C[Clean Data & Feature Engineering<br>(Encoding, Normalization, Windowing)];
+    C --> D(Filter Domains);
+    D --> E{Split Data<br>(Train/Val/Test Sets<br>Stratify by Domain?)};
 
     subgraph "Model Training Pipeline"
-    direction LR
-    E -- Train Set --> F[Select Enabled Models<br>(RF, NN)];
-    F --> G{Hyperparameter Optimization?<br>(`config.models.*.optimization`)}
-    G -- Yes --> H[Optimize via CV<br>(Optuna/RandomizedSearch)];
-    G -- No --> I[Train Model<br>(`model.fit`)];
-    H --> I;
-    I --> J[Save Trained Model<br>(`.pkl`/`.pt`)];
+        direction LR
+        E -- Train Set --> F[Select Enabled Models<br>(RF, NN)];
+        F --> G{Optimize Hyperparameters?};
+        G -- Yes --> H[Optimize via CV<br>(Optuna/RandomizedSearch)];
+        G -- No --> I[Train Model<br>(model.fit)];
+        H --> I;
+        I --> J[Save Trained Model<br>(./models/...)];
     end
 
     subgraph "Model Evaluation Pipeline"
-    direction LR
-    J --> K[Load Trained Model<br>(from `./models/models_{T}/`)];
-    E -- Evaluation Set (Test/Val) --> L[Prepare Eval Data];
-    K --> M[Predict on Eval Set<br>(`model.predict`/`predict_with_std`)];
-    L --> M;
-    M --> N[Calculate Metrics<br>(`utils.metrics.evaluate_predictions`)];
-    N --> O[Save Metrics & Detailed Results<br>(to `./output/outputs_{T}/`)];
+        direction LR
+        J --> K[Load Trained Model];
+        E -- Evaluation Set (Test/Val) --> L[Prepare Eval Data];
+        K --> M[Predict on Eval Set<br>(model.predict/predict_with_std)];
+        L --> M;
+        M --> N[Calculate Metrics<br>(utils.metrics)];
+        N --> O[Save Metrics & Results<br>(./output/outputs_T/...)];
     end
 
     subgraph "Prediction Pipeline"
-    direction LR
-    P[Input: New Data CSV] --> Q(Load & Process New Data);
-    J --> R[Load Trained Model];
-    Q --> S[Predict on New Data<br>(`model.predict`/`predict_with_std`)];
-    R --> S;
-    S --> T[Save Predictions CSV];
+        direction LR
+        P[Input: New Data CSV] --> Q(Load & Process New Data);
+        J --> R[Load Trained Model];
+        Q --> S[Predict on New Data<br>(model.predict/predict_with_std)];
+        R --> S;
+        S --> T[Save Predictions CSV];
     end
 
     subgraph "Analysis & Comparison"
-    direction LR
-    O -- Per-Temp Results --> U[Temperature Comparison<br>(`temperature.comparison`)];
-    O -- Per-Temp Results --> V[Analysis & Visualization Data<br>(Feature Importance, Residue Errors, etc.)];
-    U --> W[Save Comparison Data<br>(to `./output/outputs_comparison/`)]
-    V --> X[Save Analysis Data CSVs & Basic Plots<br>(to `./output/outputs_{T}/`)];
+        direction LR
+        O -- Per-Temp Results --> U[Temperature Comparison<br>(temperature.comparison)];
+        O -- Per-Temp Results --> V[Analysis & Vis Data Gen<br>(Feature Importance, etc.)];
+        U --> W[Save Comparison Data<br>(./output/outputs_comparison/)]
+        V --> X[Save Analysis CSVs & Plots<br>(./output/outputs_T/...)];
     end
 
-    Z[Configuration File<br>(`default_config.yaml`, Overrides)]-.-> B;
-    Z-.-> C;
-    Z-.-> D;
-    Z-.-> E;
-    Z-.-> F;
-    Z-.-> G;
-    Z-.-> L;
-    Z-.-> N;
-    Z-.-> U;
-    Z-.-> V;
+    Z[Configuration File<br>(YAML, Env Vars, CLI)] --> B;
+    Z --> C;
+    Z --> D;
+    Z --> E;
+    Z --> F;
+    Z --> G;
+    Z --> L;
+    Z --> N;
+    Z --> U;
+    Z --> V;
 
     style A fill:#FFDAB9,stroke:#FFA07A
     style P fill:#FFDAB9,stroke:#FFA07A
@@ -194,7 +193,7 @@ graph TD
 
 ```mermaid
 flowchart TD
-    start([🏁 Start `flexseq <command>`]) --> config[📝 Load Configuration<br>(YAML + Env Var + CLI Params)];
+    start([🏁 Start `flexseq <command>`]) --> config[📝 Load Configuration];
     config --> op{⚙️ Operation Type?};
 
     op -->|train| train_flow
@@ -205,10 +204,9 @@ flowchart TD
     op -->|compare-temperatures| compare_flow
 
     subgraph train_flow [Train Flow]
-        direction LR
         tr_start(Train) --> tr_mode{Mode?};
-        tr_mode -- FlexSeq --> tr_std_feats(Standard Features);
-        tr_mode -- OmniFlex --> tr_adv_feats(Advanced Features);
+        tr_mode -- FlexSeq --> tr_std_feats(Use Standard Features);
+        tr_mode -- OmniFlex --> tr_adv_feats(Use Advanced Features);
         tr_std_feats --> tr_temp(Select Temperature);
         tr_adv_feats --> tr_temp;
         tr_temp --> tr_data(Load & Process Data);
@@ -219,12 +217,11 @@ flowchart TD
         tr_hp_check -- No --> tr_train(Train Models);
         tr_hp_opt --> tr_train;
         tr_train --> tr_save(Save Models);
-        tr_save --> tr_eval(Evaluate on Validation);
+        tr_save --> tr_eval(Evaluate on Validation Set);
         tr_eval --> tr_end(End Train);
     end
 
     subgraph eval_flow [Evaluate Flow]
-        direction LR
         ev_start(Evaluate) --> ev_mode{Mode?};
         ev_mode --> ev_temp(Select Temperature);
         ev_temp --> ev_load_data(Load & Process Data);
@@ -237,18 +234,16 @@ flowchart TD
     end
 
     subgraph predict_flow [Predict Flow]
-        direction LR
         pr_start(Predict) --> pr_mode{Mode?};
         pr_mode --> pr_temp(Select Temperature);
-        pr_temp --> pr_input(Load & Process Input Data);
-        pr_input --> pr_load_model(Load Best/Specified Model);
+        pr_temp --> pr_input(Load & Process Input CSV);
+        pr_input --> pr_load_model(Load Model);
         pr_load_model --> pr_predict(Generate Predictions);
-        pr_predict --> pr_save(Save Predictions);
+        pr_predict --> pr_save(Save Output CSV);
         pr_save --> pr_end(End Predict);
     end
 
     subgraph run_flow [Run Flow]
-        direction LR
         run_start(Run) --> run_train(Execute Train Flow);
         run_train --> run_eval(Execute Evaluate Flow);
         run_eval --> run_analyze(Analyze & Gen Viz Data);
@@ -256,7 +251,6 @@ flowchart TD
     end
 
      subgraph train_all_flow [Train All Temps Flow]
-        direction LR
         tat_start(Train All) --> tat_loop{For each Temp in Config};
         tat_loop -- Loop --> tat_train(Execute Train Flow for Temp);
         tat_train -- Done --> tat_loop;
@@ -264,7 +258,6 @@ flowchart TD
      end
 
      subgraph compare_flow [Compare Temps Flow]
-        direction LR
         ct_start(Compare) --> ct_load(Load Results from All Temps);
         ct_load --> ct_analyze(Compare Metrics & Predictions);
         ct_analyze --> ct_save(Save Comparison Data);
@@ -384,8 +377,10 @@ Output files are saved to the configured `paths.output_dir` (default: `./output`
 | ⭐ **Feature Importance**   | Importance scores for each feature per model            | CSV, PNG| `./output/outputs_{T}/feature_importance/`        |
 | 🧬 **Residue Analysis**     | Data for error analysis by AA, position, structure    | CSV, PNG| `./output/outputs_{T}/residue_analysis/`          |
 | 🌡️ **Temp Comparison**     | Combined results and metrics across temperatures        | CSV    | `./output/outputs_comparison/`                    |
-| 📉 **Training History (NN)**| Epoch-wise loss/metrics for Neural Network              | CSV, PNG| `./output/outputs_{T}/training_performance/`      |
+| 📉 **Training History (NN)**| Epoch-wise loss/metrics for Neural Network              | CSV, PNG| `./output/outputs_{T}/neural_network_training_history.csv` |
 | 📊 **Visualization Data**   | Pre-formatted data for generating plots externally      | CSV    | `./output/outputs_{T}/visualization_data/`        |
+
+*Note: Specific filenames for plots and analysis CSVs can be found in the `flexseq/utils/visualization.py` module.*
 
 ## 🤖 Models
 
@@ -454,12 +449,12 @@ dataset:
       phi_norm: true
       psi_norm: true
       resname_encoded: true
-      esm_rmsf: true              # OmniFlex only
-      voxel_rmsf: false           # OmniFlex only
+      esm_rmsf: true              # OmniFlex only (requires column in data)
+      voxel_rmsf: false           # OmniFlex only (requires column in data)
     window:                       # Window feature settings
       enabled: true
       size: 5                     # Window = size*2 + 1 residues
-  target: rmsf_{temperature}      # Target variable column name
+  target: rmsf_{temperature}      # Target variable column name (templated)
   split:
     test_size: 0.2
     validation_size: 0.15
