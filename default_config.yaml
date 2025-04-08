@@ -5,7 +5,7 @@
 
 # Paths
 paths:
-  data_dir: ./data                # Data directory
+  data_dir: ./data               # Data directory
   output_dir: ./output            # Output directory
   models_dir: ./models            # Saved models directory
 
@@ -14,11 +14,11 @@ mode:
   active: "omniflex"              # Using advanced mode
   omniflex:
     use_esm: true                 # Use ESM embeddings feature
-    use_voxel: false               # Enable 3D voxel feature
+    use_voxel: true               # Enable 3D voxel feature
 
 # Temperature configuration
 temperature:
-  current: 348                    # Current temperature to process
+  current: 320                    # Current temperature to process
   available: [320, 348, 379, 413, 450, "average"]
   comparison:
     enabled: true                 # Generate temperature comparisons
@@ -49,19 +49,19 @@ dataset:
     use_features:
       protein_size: true          # Size of protein
       normalized_resid: true      # Position in sequence
-      relative_accessibility: true # Solvent accessibility
-      core_exterior_encoded: true # Core or exterior
-      secondary_structure_encoded: true # Secondary structure
-      phi_norm: true              # Normalized phi angle
-      psi_norm: true              # Normalized psi angle
+      relative_accessibility: false # Solvent accessibility
+      core_exterior_encoded: false # Core or exterior
+      secondary_structure_encoded: false # Secondary structure
+      phi_norm: false              # Normalized phi angle
+      psi_norm: false              # Normalized psi angle
       resname_encoded: true       # Encoded residue name
       esm_rmsf: true              # ESM embeddings prediction (OmniFlex only)
-      voxel_rmsf: false            # 3D voxel prediction (OmniFlex only)
+      voxel_rmsf: true            # 3D voxel prediction (OmniFlex only)
     
     # Enhanced feature engineering
     window:
       enabled: true               # Use window-based features
-      size: 5                     # Increased window size for better context
+      size: 10                     # Increased window size for better context
 
   # Target variable
   target: rmsf_{temperature}      # Templated with current temperature
@@ -104,11 +104,11 @@ models:
       optimizer: adam             # Optimizer
       learning_rate: 0.001        # Learning rate
       batch_size: 64              # Increased batch size
-      epochs: 100                 # Increased max epochs
+      epochs: 15                 # Increased max epochs
       early_stopping: true        # Use early stopping
-      patience: 15                # Increased patience
+      patience: 5                # Increased patience
     hyperparameter_optimization:
-      enabled: true               # Enable hyperparameter optimization
+      enabled: false               # Enable hyperparameter optimization
       method: "random"          # Better optimization method
       trials: 5                  # More trials
       parameters:                 # Enhanced parameter space
@@ -134,9 +134,9 @@ models:
     max_features: 0.7             # Feature fraction
     bootstrap: true               # Use bootstrapping
     randomized_search:
-      enabled: true               # Enable RandomizedSearchCV
-      n_iter: 50                  # More parameter combinations to try
-      cv: 5                       # Increased cross-validation folds
+      enabled: false               # Enable RandomizedSearchCV
+      n_iter: 1                  # More parameter combinations to try
+      cv: 1                       # Increased cross-validation folds
       param_distributions:        # Enhanced parameter distributions to search
         n_estimators: [100, 200, 300, 500, 800]
         max_depth: [null, 15, 30, 50, 100]
@@ -144,6 +144,7 @@ models:
         min_samples_leaf: [1, 2, 3, 4, 5]
         max_features: ["auto", "sqrt", "log2", 0.5, 0.7, 0.9]
         bootstrap: [true, false]
+  
 
 # Analysis and visualization
 analysis:

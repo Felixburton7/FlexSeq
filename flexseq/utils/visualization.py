@@ -6,6 +6,15 @@ to be used by external visualization tools. The functions primarily save data
 in CSV format that can be visualized separately.
 """
 
+
+from scipy import stats
+
+from flexseq.data.loader import load_temperature_data
+# Add these lines:
+from flexseq.utils.helpers import progress_bar, ProgressCallback
+import time # Optional, but useful for timing sections
+
+
 import os
 import logging
 from typing import Dict, List, Tuple, Any, Optional, Union
@@ -20,7 +29,9 @@ import seaborn as sns
 from flexseq.utils.helpers import (
     get_temperature_color,
     make_model_color_map,
-    ensure_dir
+    ensure_dir, 
+    progress_bar, 
+    ProgressCallback
 )
 
 logger = logging.getLogger(__name__)

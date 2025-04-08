@@ -110,7 +110,7 @@ OUTPUT_FILE="$PWD/FlexSeq_context.txt"
     # Model files
     echo "### Model Files ###"
     echo "---------------------------------------------------------"
-    for file in flexseq/models/{__init__,base,random_forest,neural_network}.py; do
+    for file in flexseq/models/__init__.py flexseq/models/base.py flexseq/models/random_forest.py flexseq/models/neural_network.py; do
         if [ -f "$file" ]; then
             echo "===== FILE: $file ====="
             cat "$file"
@@ -121,7 +121,7 @@ OUTPUT_FILE="$PWD/FlexSeq_context.txt"
     # Data handling files
     echo "### Data Handling Files ###"
     echo "---------------------------------------------------------"
-    for file in flexseq/data/{__init__,loader,processor}.py; do
+    for file in flexseq/data/__init__.py flexseq/data/loader.py flexseq/data/processor.py; do
         if [ -f "$file" ]; then
             echo "===== FILE: $file ====="
             cat "$file"
@@ -132,7 +132,7 @@ OUTPUT_FILE="$PWD/FlexSeq_context.txt"
     # Temperature handling files
     echo "### Temperature Handling Files ###"
     echo "---------------------------------------------------------"
-    for file in flexseq/temperature/{__init__,comparison}.py; do
+    for file in flexseq/temperature/__init__.py flexseq/temperature/comparison.py; do
         if [ -f "$file" ]; then
             echo "===== FILE: $file ====="
             cat "$file"
@@ -143,13 +143,46 @@ OUTPUT_FILE="$PWD/FlexSeq_context.txt"
     # Utility files
     echo "### Utility Files ###"
     echo "---------------------------------------------------------"
-    for file in flexseq/utils/{__init__,helpers,metrics,visualization}.py; do
+    for file in flexseq/utils/__init__.py flexseq/utils/helpers.py flexseq/utils/metrics.py flexseq/utils/visualization.py; do
         if [ -f "$file" ]; then
             echo "===== FILE: $file ====="
             cat "$file"
             echo ""
         fi
     done
+    
+    # Output utils files
+    echo "### Output Utils Files ###"
+    echo "---------------------------------------------------------"
+    for file in output/utils/__init__.py output/utils/helpers.py output/utils/metrics.py output/utils/visualization.py; do
+        if [ -f "$file" ]; then
+            echo "===== FILE: $file ====="
+            cat "$file"
+            echo ""
+        fi
+    done
+    
+    # NEW SECTION: Output result files with first 15 lines
+    echo "=========================================================="
+    echo "Output Result Files (First 15 lines of each file)"
+    echo "=========================================================="
+    echo ""
+    
+    # Find all files in the output directory, excluding pngs and the utils directory
+    echo "Finding output result files..."
+    output_files=$(find ./output -type f -not -name "*.png" -not -path "*/utils/*" -not -path "*/\.*" 2>/dev/null | sort)
+    
+    if [ -z "$output_files" ]; then
+        echo "No output result files found."
+    else
+        for file in $output_files; do
+            echo "===== FILE: $file ====="
+            echo "First 15 lines:"
+            head -15 "$file"
+            echo ""
+            echo "---------------------------------------------------------"
+        done
+    fi
     
     echo "=========================================================="
     echo "End of FlexSeq Context Document"

@@ -84,7 +84,10 @@ File Listing (excluding cache, data, output, and test directories):
 ./flexseq/utils/__init__.py
 ./flexseq/utils/metrics.py
 ./flexseq/utils/__pycache__
+./flexseq/utils/temperature_comparison_visualizer.py
 ./flexseq/utils/visualization.py
+./.git
+./maxed_config.yaml
 ./models
 ./output
 ./pyproject.toml
@@ -94,20 +97,23 @@ File Listing (excluding cache, data, output, and test directories):
 ==========================================================
 Default Configuration (default_config.yaml)
 ==========================================================
-# FlexSeq Configuration
+# # FlexSeq Configuration
+
+
+# FlexSeq Configuration with Maxed Specifications
 
 # Paths
 paths:
-  data_dir: ./data                # Data directory
+  data_dir: ./data               # Data directory
   output_dir: ./output            # Output directory
   models_dir: ./models            # Saved models directory
 
 # Mode configuration
 mode:
-  active: "flexseq"               # "flexseq" or "omniflex"
+  active: "omniflex"              # Using advanced mode
   omniflex:
     use_esm: true                 # Use ESM embeddings feature
-    use_voxel: true               # Use 3D voxel feature
+    use_voxel: true               # Enable 3D voxel feature
 
 # Temperature configuration
 temperature:
@@ -138,7 +144,7 @@ dataset:
       - resname                   # Residue name
       - rmsf_{temperature}        # Target variable
     
-    # Input features with toggles
+    # Input features with toggles - all enabled
     use_features:
       protein_size: true          # Size of protein
       normalized_resid: true      # Position in sequence
@@ -148,18 +154,18 @@ dataset:
       phi_norm: true              # Normalized phi angle
       psi_norm: true              # Normalized psi angle
       resname_encoded: true       # Encoded residue name
-      esm_rmsf: false             # ESM embeddings prediction (OmniFlex only)
-      voxel_rmsf: false           # 3D voxel prediction (OmniFlex only)
+      esm_rmsf: true              # ESM embeddings prediction (OmniFlex only)
+      voxel_rmsf: false            # 3D voxel prediction (OmniFlex only)
     
-    # Feature engineering
+    # Enhanced feature engineering
     window:
       enabled: true               # Use window-based features
-      size: 3                     # Window size (residues on each side)
-  
+      size: 10                     # Increased window size for better context
+
   # Target variable
   target: rmsf_{temperature}      # Templated with current temperature
   
-  # Data splitting
+  # Data splitting - standard split is fine
   split:
     test_size: 0.2                # Test set size
     validation_size: 0.15         # Validation set size
@@ -182,67 +188,68 @@ models:
   # Shared settings
   common:
     cross_validation:
-      enabled: false              # Whether to use CV
+      enabled: true               # Enable cross-validation for better validation
       folds: 5                    # Number of folds if enabled
     save_best: true               # Save best model
   
-  # Neural Network
+  # Neural Network - enhanced architecture and training
   neural_network:
     enabled: true                 # Run this model
     architecture:
-      hidden_layers: [64, 32]     # Layer sizes
+      hidden_layers: [256, 128, 64]  # Larger network
       activation: relu            # Activation function
-      dropout: 0.2                # Dropout rate
+      dropout: 0.3                # Increased dropout for better generalization
     training:
       optimizer: adam             # Optimizer
       learning_rate: 0.001        # Learning rate
-      batch_size: 32              # Batch size
-      epochs: 5                 # Max epochs
+      batch_size: 64              # Increased batch size
+      epochs: 20                 # Increased max epochs
       early_stopping: true        # Use early stopping
-      patience: 10                # Early stopping patience
+      patience: 5                # Increased patience
     hyperparameter_optimization:
-      enabled: false              # Enable hyperparameter optimization
-      method: "bayesian"          # "grid", "random", or "bayesian"
-      trials: 20                  # Number of trials
-      parameters:                 # Parameters to optimize
+      enabled: false               # Enable hyperparameter optimization
+      method: "random"          # Better optimization method
+      trials: 5                  # More trials
+      parameters:                 # Enhanced parameter space
         hidden_layers:
-          - [32, 16]
           - [64, 32]
           - [128, 64]
-          - [64, 32, 16]
-        learning_rate: [0.01, 0.001, 0.0001]
-        batch_size: [16, 32, 64]
-        dropout: [0.1, 0.2, 0.3, 0.5]
-        activation: ["relu", "leaky_relu"]
+          - [256, 128]
+          - [512, 256, 128]
+          - [256, 128, 64, 32]
+          - [128, 128, 64]
+        learning_rate: [0.01, 0.005, 0.001, 0.0005, 0.0001]
+        batch_size: [32, 64, 128]
+        dropout: [0.1, 0.2, 0.3, 0.4, 0.5]
+        activation: ["relu", "leaky_relu", "tanh"]
   
-  # Random Forest
+  # Random Forest - enhanced model
   random_forest:
     enabled: true                 # Run this model
-    n_estimators: 100             # Number of trees
+    n_estimators: 500             # Increased number of trees
     max_depth: null               # Max tree depth
     min_samples_split: 2          # Min samples to split
     min_samples_leaf: 1           # Min samples in leaf
     max_features: 0.7             # Feature fraction
     bootstrap: true               # Use bootstrapping
     randomized_search:
-      enabled: false              # Enable RandomizedSearchCV
-      n_iter: 20                  # Number of parameter combinations to try
-      cv: 3                       # Number of cross-validation folds
-      param_distributions:        # Parameter distributions to search
-        n_estimators: [50, 100, 200, 300]
-        max_depth: [null, 10, 20, 30]
-        min_samples_split: [2, 5, 10]
-        min_samples_leaf: [1, 2, 4]
-        max_features: ["auto", "sqrt", "log2", 0.7]
+      enabled: true               # Enable RandomizedSearchCV
+      n_iter: 3                  # More parameter combinations to try
+      cv: 2                       # Increased cross-validation folds
+      param_distributions:        # Enhanced parameter distributions to search
+        n_estimators: [100, 200, 300, 500, 800]
+        max_depth: [null, 15, 30, 50, 100]
+        min_samples_split: [2, 3, 5, 8, 10]
+        min_samples_leaf: [1, 2, 3, 4, 5]
+        max_features: ["auto", "sqrt", "log2", 0.5, 0.7, 0.9]
         bootstrap: [true, false]
 
-# Analysis and visualization
 # Analysis and visualization
 analysis:
   feature_importance: 
     enabled: true                 # Analyze feature importance
     method: "permutation"         # Use permutation importance
-    n_repeats: 10                 # Number of permutation repetitions
+    n_repeats: 20                 # Increased permutation repetitions
     use_validation_data: true     # Use validation data for importance calculation
   
   temperature_comparison:
@@ -255,10 +262,174 @@ analysis:
 
 # System settings
 system:
-  n_jobs: -1                      # Number of parallel jobs
+  n_jobs: -1                      # Use all available cores
   random_state: 42                # Global random seed
   log_level: INFO                 # Logging level
   gpu_enabled: auto               # Auto-detect GPU
+
+# # Paths
+# paths:
+#   data_dir: ./data                # Data directory
+#   output_dir: ./output            # Output directory
+#   models_dir: ./models            # Saved models directory
+
+# # Mode configuration
+# mode:
+#   active: "omniflex"               # "flexseq" or "omniflex"
+#   omniflex:
+#     use_esm: true                 # Use ESM embeddings feature
+#     use_voxel: false               # Use 3D voxel feature
+
+# # Temperature configuration
+# temperature:
+#   current: 348                    # Current temperature to process
+#   available: [320, 348, 379, 413, 450, "average"]
+#   comparison:
+#     enabled: true                 # Generate temperature comparisons
+#     metrics: ["rmse", "r2", "pearson_correlation", "root_mean_square_absolute_error"]
+
+# # Dataset configuration
+# dataset:
+#   # Data loading
+#   file_pattern: "temperature_{temperature}_train.csv"
+  
+#   # Domain filtering
+#   domains:
+#     include: []                   # Empty means include all domains
+#     exclude: []                   # Domains to exclude
+#     min_protein_size: 0           # Minimum protein size
+#     max_protein_size: null        # Maximum protein size (null = no limit)
+  
+#   # Feature configuration
+#   features:
+#     # Required columns that must exist in data
+#     required:
+#       - domain_id                 # Domain identifier
+#       - resid                     # Residue ID
+#       - resname                   # Residue name
+#       - rmsf_{temperature}        # Target variable
+    
+#     # Input features with toggles
+#     use_features:
+#       protein_size: true          # Size of protein
+#       normalized_resid: true      # Position in sequence
+#       relative_accessibility: true # Solvent accessibility
+#       core_exterior_encoded: true # Core or exterior
+#       secondary_structure_encoded: true # Secondary structure
+#       phi_norm: true              # Normalized phi angle
+#       psi_norm: true              # Normalized psi angle
+#       resname_encoded: true       # Encoded residue name
+#       esm_rmsf: false             # ESM embeddings prediction (OmniFlex only)
+#       voxel_rmsf: false           # 3D voxel prediction (OmniFlex only)
+    
+#     # Feature engineering
+#     window:
+#       enabled: true               # Use window-based features
+#       size: 3                     # Window size (residues on each side)
+  
+#   # Target variable
+#   target: rmsf_{temperature}      # Templated with current temperature
+  
+#   # Data splitting
+#   split:
+#     test_size: 0.2                # Test set size
+#     validation_size: 0.15         # Validation set size
+#     stratify_by_domain: true      # Keep domains together
+#     random_state: 42              # Random seed
+
+# # Evaluation settings
+# evaluation:
+#   comparison_set: "test"          # Which set to use: "validation" or "test"
+#   metrics:
+#     rmse: true                    # Root Mean Squared Error
+#     mae: true                     # Mean Absolute Error
+#     r2: true                      # R-squared
+#     pearson_correlation: true     # Pearson correlation
+#     spearman_correlation: true    # Spearman rank correlation
+#     root_mean_square_absolute_error: true  # Root Mean Square Absolute Error
+
+# # Model configurations
+# models:
+#   # Shared settings
+#   common:
+#     cross_validation:
+#       enabled: false              # Whether to use CV
+#       folds: 5                    # Number of folds if enabled
+#     save_best: true               # Save best model
+  
+#   # Neural Network
+#   neural_network:
+#     enabled: true                 # Run this model
+#     architecture:
+#       hidden_layers: [64, 32]     # Layer sizes
+#       activation: relu            # Activation function
+#       dropout: 0.2                # Dropout rate
+#     training:
+#       optimizer: adam             # Optimizer
+#       learning_rate: 0.001        # Learning rate
+#       batch_size: 32              # Batch size
+#       epochs: 100                 # Max epochs
+#       early_stopping: true        # Use early stopping
+#       patience: 10                # Early stopping patience
+#     hyperparameter_optimization:
+#       enabled: true              # Enable hyperparameter optimization
+#       method: "random"          # "grid", "random", or "bayesian"
+#       trials: 10                  # Number of trials
+#       parameters:                 # Parameters to optimize
+#         hidden_layers:
+#           - [32, 16]
+#           - [64, 32]
+#           - [128, 64]
+#           - [64, 32, 16]
+#         learning_rate: [0.01, 0.001, 0.0001]
+#         batch_size: [16, 32, 64]
+#         dropout: [0.1, 0.2, 0.3, 0.5]
+#         activation: ["relu", "leaky_relu"]
+  
+#   # Random Forest
+#   random_forest:
+#     enabled: true                 # Run this model
+#     n_estimators: 100             # Number of trees
+#     max_depth: null               # Max tree depth
+#     min_samples_split: 2          # Min samples to split
+#     min_samples_leaf: 1           # Min samples in leaf
+#     max_features: 0.7             # Feature fraction
+#     bootstrap: true               # Use bootstrapping
+#     randomized_search:
+#       enabled: true              # Enable RandomizedSearchCV
+#       n_iter: 20                  # Number of parameter combinations to try
+#       cv: 3                       # Number of cross-validation folds
+#       param_distributions:        # Parameter distributions to search
+#         n_estimators: [50, 100, 200, 300]
+#         max_depth: [null, 10, 20, 30]
+#         min_samples_split: [2, 5, 10]
+#         min_samples_leaf: [1, 2, 4]
+#         max_features: ["auto", "sqrt", "log2", 0.7]
+#         bootstrap: [true, false]
+
+# # Analysis and visualization
+# # Analysis and visualization
+# analysis:
+#   feature_importance: 
+#     enabled: true                 # Analyze feature importance
+#     method: "permutation"         # Use permutation importance
+#     n_repeats: 10                 # Number of permutation repetitions
+#     use_validation_data: true     # Use validation data for importance calculation
+  
+#   temperature_comparison:
+#     enabled: true                 # Compare results across temperatures
+#     metrics: ["rmse", "r2", "pearson_correlation", "root_mean_square_absolute_error"]
+#     plots:
+#       histogram: true             # Generate histogram plots
+#       correlation: true           # Generate correlation plots
+#       performance: true           # Generate performance comparison plots
+
+# # System settings
+# system:
+#   n_jobs: -1                      # Number of parallel jobs
+#   random_state: 42                # Global random seed
+#   log_level: INFO                 # Logging level
+#   gpu_enabled: auto               # Auto-detect GPU
 ==========================================================
 FlexSeq Package Files
 ==========================================================
@@ -273,33 +444,37 @@ build-backend = "setuptools.build_meta"
 name = "flexseq"
 version = "0.1.0"
 description = "ML pipeline for protein flexibility prediction with multi-temperature analysis"
-authors = [{name = "Felix Burton", email = "Feliburton2002@gmail.com"}]
+readme = "README.md"
+authors = [
+  { name = "Felix Burton", email = "felixburton2002@gmail.com" }
+]
 requires-python = ">=3.8"
 classifiers = [
-    "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: MIT License",
-    "Operating System :: OS Independent",
-    "Topic :: Scientific/Engineering :: Bio-Informatics",
-    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Topic :: Scientific/Engineering :: Bio-Informatics",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence"
 ]
 dependencies = [
-    "numpy>=1.20.0",
-    "pandas>=1.3.0",
-    "scikit-learn>=1.0.0",
-    "torch>=1.9.0",
-    "pyyaml>=6.0",
-    "click>=8.0.0",
-    "matplotlib>=3.4.0",
-    "seaborn>=0.11.0",
-    "joblib>=1.0.0",
-    "tqdm>=4.64.0",
+  "numpy>=1.20.0",
+  "pandas>=1.3.0",
+  "scikit-learn>=1.0.0",
+  "torch>=1.9.0",
+  "pyyaml>=6.0",
+  "click>=8.0.0",
+  "matplotlib>=3.4.0",
+  "seaborn>=0.11.0",
+  "joblib>=1.0.0",
+  "tqdm>=4.64.0",
+  "optuna>=3.0.0"
 ]
 
 [project.scripts]
 flexseq = "flexseq.cli:cli"
 
 [project.urls]
-"Homepage" = "https://github.com/Felixburton7/flexseq"
+Homepage = "https://github.com/Felixburton7/flexseq"
 "Bug Tracker" = "https://github.com/Felixburton7/flexseq/issues"
 ===== FILE: setup.py =====
 import os
@@ -332,6 +507,7 @@ setup(
         "matplotlib>=3.4.0",
         "seaborn>=0.11.0",
         "joblib>=1.0.0",
+        "optuna>=3.0.0",
     ],
     entry_points={
         "console_scripts": [
@@ -352,7 +528,546 @@ setup(
     python_requires=">=3.8",
 )
 ===== FILE: README.md =====
+Okay, here is the revised `README.md` file, incorporating the accurate content from the project context and documentation into the desired style.
 
+```markdown
+# FlexSeq: Protein Flexibility Prediction Pipeline 🧬🔍
+
+<div align="center">
+
+<img src="https://via.placeholder.com/150x150/4B0082/FFFFFF?text=FlexSeq" alt="FlexSeq Logo" width="150"/>
+
+[![Python Version](https://img.shields.io/badge/python-3.8%2B-blue?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
+[![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen?style=for-the-badge)](CONTRIBUTING.md)
+[![GitHub Repo](https://img.shields.io/badge/GitHub-Repo-blue?style=for-the-badge&logo=github)](https://github.com/Felixburton7/flexseq)
+
+**A comprehensive machine learning pipeline for predicting protein flexibility (RMSF) across multiple temperatures using sequence and structural features.**
+
+[📊 Key Features](#key-features) •
+[🔧 Installation](#installation) •
+[🚀 Quick Start](#quick-start) •
+[🔄 Pipeline Overview](#pipeline-overview) •
+[📥 Input Data](#input-data) •
+[📤 Output Data](#output-data) •
+[🤖 Models](#models) •
+[📈 Analysis & Visualization](#analysis--visualization) •
+[⚙️ Configuration](#configuration) •
+[💻 Command-Line Interface](#command-line-interface) •
+[📚 Documentation](#documentation) •
+[🤝 Contributing](#contributing)
+
+</div>
+
+## 🌟 Overview
+
+FlexSeq is a machine learning pipeline meticulously designed for predicting protein flexibility, quantified as Root Mean Square Fluctuation (RMSF), based on protein sequence and structural features. A core capability of FlexSeq is its robust support for analyzing and comparing flexibility across a range of user-defined temperatures (e.g., 320K, 348K, 379K, 413K, 450K, and an averaged dataset), enabling the study of temperature-dependent dynamic behavior.
+
+The pipeline offers two distinct operational modes, configurable via the `mode.active` setting:
+
+-   **🔬 FlexSeq Mode**: The standard operational mode, utilizing a rich set of features derived directly from protein sequence and basic structural properties (e.g., protein size, residue position, solvent accessibility, secondary structure classification from DSSP, backbone dihedral angles φ/ψ).
+-   **🔭 OmniFlex Mode**: An enhanced prediction mode that leverages the standard features *plus* pre-computed RMSF predictions derived from external, powerful models like ESM (Evolutionary Scale Modeling) embeddings (`esm_rmsf`) and potentially 3D voxel representations (`voxel_rmsf`), aiming for improved predictive accuracy.
+
+FlexSeq employs a modular and configurable architecture, built upon Python libraries like Pandas, Scikit-learn, PyTorch, and Optuna. It features:
+*   Configurable machine learning models (Random Forest and Neural Network).
+*   Automated feature engineering, including sequence-window features and numerical encoding.
+*   Comprehensive model evaluation using a suite of standard regression metrics.
+*   Integrated hyperparameter optimization using Randomized Search (RF) or Optuna (NN).
+*   Tools for systematic comparison of results across different temperatures.
+*   Uncertainty estimation capabilities for model predictions.
+*   A flexible and user-friendly Command-Line Interface (CLI) powered by Click.
+
+## 📊 Key Features
+
+<table>
+<thead>
+  <tr bgcolor="#6236FF">
+    <th width="200"><span style="color:white">Feature</span></th>
+    <th><span style="color:white">Description</span></th>
+  </tr>
+</thead>
+<tbody>
+  <tr>
+    <td>🌡️ **Multi-Temperature Analysis**</td>
+    <td>Train models, evaluate performance, and compare RMSF predictions across a user-defined list of temperatures (e.g., `[320, 348, 379, 413, 450, "average"]`).</td>
+  </tr>
+  <tr>
+    <td>🤖 **Multiple ML Models**</td>
+    <td>Includes Random Forest (Scikit-learn) and Feed-Forward Neural Network (PyTorch) implementations. The architecture allows for easy addition of new models inheriting from `BaseModel`.</td>
+  </tr>
+  <tr>
+    <td>⚙️ **Feature Engineering**</td>
+    <td>Automatic encoding of categorical features (residue name, core/exterior, secondary structure), normalization of angles (φ/ψ), calculation of normalized residue position, and optional generation of window-based features using neighboring residue information.</td>
+  </tr>
+  <tr>
+    <td>🔬 **OmniFlex Mode**</td>
+    <td>Optionally incorporates external predictions (`esm_rmsf`, `voxel_rmsf`) as input features for potentially enhanced performance. Enabled via configuration.</td>
+  </tr>
+  <tr>
+    <td>⚠️ **Uncertainty Quantification**</td>
+    <td>Models provide uncertainty estimates: standard deviation across trees for Random Forest, Monte Carlo Dropout sampling for Neural Network.</td>
+  </tr>
+  <tr>
+    <td>📏 **Comprehensive Evaluation**</td>
+    <td>Utilizes multiple metrics including RMSE, MAE, R², Pearson correlation, Spearman correlation, and Root Mean Square Absolute Error (RMSAE). Metrics are configurable.</td>
+  </tr>
+  <tr>
+    <td>📊 **Analysis & Visualization**</td>
+    <td>Generates detailed output CSV files for evaluation metrics, domain-level performance, residue-level errors (by AA type, position, structure), feature importance, and cross-temperature comparisons, suitable for external visualization tools. Also generates basic plots (e.g., feature importance).</td>
+  </tr>
+   <tr>
+    <td>🧩 **Domain Stratification**</td>
+    <td>Supports data splitting (`train`/`validation`/`test`) that ensures all residues from a given protein domain are kept within the same split, preventing data leakage between sets.</td>
+  </tr>
+  <tr>
+    <td>🎯 **Hyperparameter Optimization**</td>
+    <td>Automated tuning for both models using Scikit-learn's `RandomizedSearchCV` for Random Forest and Optuna (supporting random search and Bayesian optimization) for Neural Network. Configuration allows defining search spaces and trials.</td>
+  </tr>
+  <tr>
+    <td>💻 **Command-Line Interface**</td>
+    <td>Provides the `flexseq` command with subcommands (`train`, `evaluate`, `predict`, `run`, `compare-temperatures`, etc.) for easy pipeline execution and control.</td>
+  </tr>
+   <tr>
+    <td>⚙️ **Configuration System**</td>
+    <td>Highly flexible configuration via YAML (`default_config.yaml`), environment variables (prefixed `FLEXSEQ_`), and direct CLI parameter overrides (`--param`). Supports temperature templating in paths and column names.</td>
+  </tr>
+</tbody>
+</table>
+
+## 🔄 Pipeline Overview
+
+The FlexSeq pipeline follows a structured workflow managed by the `Pipeline` class (`flexseq/pipeline.py`), driven by the configuration settings.
+
+**Conceptual Workflow Diagram:**
+
+```mermaid
+graph TD
+    A[Input: Temp-Specific CSV Data<br>(e.g., temperature_320_train.csv)] --> B(Load & Process Data);
+    B --> |`data.loader`, `data.processor`| C[Clean Data & Feature Engineering<br>(Encoding, Normalization, Windowing)];
+    C --> |`config.dataset.domains`| D(Filter Domains);
+    D --> |`data.processor.split_data`| E{Split Data<br>(Train/Val/Test Set<br>Stratify by Domain?)};
+
+    subgraph "Model Training Pipeline"
+    direction LR
+    E -- Train Set --> F[Select Enabled Models<br>(RF, NN)];
+    F --> G{Hyperparameter Optimization?<br>(`config.models.*.optimization`)}
+    G -- Yes --> H[Optimize via CV<br>(Optuna/RandomizedSearch)];
+    G -- No --> I[Train Model<br>(`model.fit`)];
+    H --> I;
+    I --> J[Save Trained Model<br>(`.pkl`/`.pt`)];
+    end
+
+    subgraph "Model Evaluation Pipeline"
+    direction LR
+    J --> K[Load Trained Model<br>(from `./models/models_{T}/`)];
+    E -- Evaluation Set (Test/Val) --> L[Prepare Eval Data];
+    K --> M[Predict on Eval Set<br>(`model.predict`/`predict_with_std`)];
+    L --> M;
+    M --> N[Calculate Metrics<br>(`utils.metrics.evaluate_predictions`)];
+    N --> O[Save Metrics & Detailed Results<br>(to `./output/outputs_{T}/`)];
+    end
+
+    subgraph "Prediction Pipeline"
+    direction LR
+    P[Input: New Data CSV] --> Q(Load & Process New Data);
+    J --> R[Load Trained Model];
+    Q --> S[Predict on New Data<br>(`model.predict`/`predict_with_std`)];
+    R --> S;
+    S --> T[Save Predictions CSV];
+    end
+
+    subgraph "Analysis & Comparison"
+    direction LR
+    O -- Per-Temp Results --> U[Temperature Comparison<br>(`temperature.comparison`)];
+    O -- Per-Temp Results --> V[Analysis & Visualization Data<br>(Feature Importance, Residue Errors, etc.)];
+    U --> W[Save Comparison Data<br>(to `./output/outputs_comparison/`)]
+    V --> X[Save Analysis Data CSVs & Basic Plots<br>(to `./output/outputs_{T}/`)];
+    end
+
+    Z[Configuration File<br>(`default_config.yaml`, Overrides)]-.-> B;
+    Z-.-> C;
+    Z-.-> D;
+    Z-.-> E;
+    Z-.-> F;
+    Z-.-> G;
+    Z-.-> L;
+    Z-.-> N;
+    Z-.-> U;
+    Z-.-> V;
+
+    style A fill:#FFDAB9,stroke:#FFA07A
+    style P fill:#FFDAB9,stroke:#FFA07A
+    style B fill:#ADD8E6,stroke:#87CEEB
+    style C fill:#ADD8E6,stroke:#87CEEB
+    style D fill:#ADD8E6,stroke:#87CEEB
+    style E fill:#ADD8E6,stroke:#87CEEB
+    style F fill:#90EE90,stroke:#3CB371
+    style G fill:#FFFFE0,stroke:#F0E68C
+    style H fill:#FFEC8B,stroke:#CDAD00
+    style I fill:#90EE90,stroke:#3CB371
+    style J fill:#C1FFC1,stroke:#00CD00
+    style K fill:#FFFFE0,stroke:#F0E68C
+    style L fill:#ADD8E6,stroke:#87CEEB
+    style M fill:#FFB6C1,stroke:#FF69B4
+    style N fill:#FFB6C1,stroke:#FF69B4
+    style O fill:#DDA0DD,stroke:#BA55D3
+    style Q fill:#ADD8E6,stroke:#87CEEB
+    style R fill:#FFFFE0,stroke:#F0E68C
+    style S fill:#FFB6C1,stroke:#FF69B4
+    style T fill:#DDA0DD,stroke:#BA55D3
+    style U fill:#E6E6FA,stroke:#9370DB
+    style V fill:#E6E6FA,stroke:#9370DB
+    style W fill:#D8BFD8,stroke:#9A32CD
+    style X fill:#D8BFD8,stroke:#9A32CD
+    style Z fill:#F5F5DC,stroke:#A0522D
+```
+
+### 🧩 Logical Flow of Operation (CLI Perspective)
+
+```mermaid
+flowchart TD
+    start([🏁 Start `flexseq <command>`]) --> config[📝 Load Configuration<br>(YAML + Env Var + CLI Params)];
+    config --> op{⚙️ Operation Type?};
+
+    op -->|train| train_flow
+    op -->|evaluate| eval_flow
+    op -->|predict| predict_flow
+    op -->|run| run_flow
+    op -->|train-all-temps| train_all_flow
+    op -->|compare-temperatures| compare_flow
+
+    subgraph train_flow [Train Flow]
+        direction LR
+        tr_start(Train) --> tr_mode{Mode?};
+        tr_mode -- FlexSeq --> tr_std_feats(Standard Features);
+        tr_mode -- OmniFlex --> tr_adv_feats(Advanced Features);
+        tr_std_feats --> tr_temp(Select Temperature);
+        tr_adv_feats --> tr_temp;
+        tr_temp --> tr_data(Load & Process Data);
+        tr_data --> tr_split(Split Data);
+        tr_split --> tr_models(Select Models);
+        tr_models --> tr_hp_check{Optimize HParams?};
+        tr_hp_check -- Yes --> tr_hp_opt(Hyperparameter Opt.);
+        tr_hp_check -- No --> tr_train(Train Models);
+        tr_hp_opt --> tr_train;
+        tr_train --> tr_save(Save Models);
+        tr_save --> tr_eval(Evaluate on Validation);
+        tr_eval --> tr_end(End Train);
+    end
+
+    subgraph eval_flow [Evaluate Flow]
+        direction LR
+        ev_start(Evaluate) --> ev_mode{Mode?};
+        ev_mode --> ev_temp(Select Temperature);
+        ev_temp --> ev_load_data(Load & Process Data);
+        ev_load_data --> ev_split(Split Data);
+        ev_split -- Eval Set --> ev_load_models(Load Models);
+        ev_load_models --> ev_predict(Generate Predictions);
+        ev_predict --> ev_metrics(Calculate Metrics);
+        ev_metrics --> ev_save(Save Results);
+        ev_save --> ev_end(End Evaluate);
+    end
+
+    subgraph predict_flow [Predict Flow]
+        direction LR
+        pr_start(Predict) --> pr_mode{Mode?};
+        pr_mode --> pr_temp(Select Temperature);
+        pr_temp --> pr_input(Load & Process Input Data);
+        pr_input --> pr_load_model(Load Best/Specified Model);
+        pr_load_model --> pr_predict(Generate Predictions);
+        pr_predict --> pr_save(Save Predictions);
+        pr_save --> pr_end(End Predict);
+    end
+
+    subgraph run_flow [Run Flow]
+        direction LR
+        run_start(Run) --> run_train(Execute Train Flow);
+        run_train --> run_eval(Execute Evaluate Flow);
+        run_eval --> run_analyze(Analyze & Gen Viz Data);
+        run_analyze --> run_end(End Run);
+    end
+
+     subgraph train_all_flow [Train All Temps Flow]
+        direction LR
+        tat_start(Train All) --> tat_loop{For each Temp in Config};
+        tat_loop -- Loop --> tat_train(Execute Train Flow for Temp);
+        tat_train -- Done --> tat_loop;
+        tat_loop -- Finished --> tat_end(End Train All);
+     end
+
+     subgraph compare_flow [Compare Temps Flow]
+        direction LR
+        ct_start(Compare) --> ct_load(Load Results from All Temps);
+        ct_load --> ct_analyze(Compare Metrics & Predictions);
+        ct_analyze --> ct_save(Save Comparison Data);
+        ct_save --> ct_end(End Compare);
+     end
+
+    tr_end --> finish([🏁 Finish])
+    ev_end --> finish
+    pr_end --> finish
+    run_end --> finish
+    tat_end --> finish
+    ct_end --> finish
+
+    style start fill:#f9f9f9,stroke:#333,stroke-width:2px
+    style finish fill:#f9f9f9,stroke:#333,stroke-width:2px
+    style config fill:#ffcc99,stroke:#ff9933,stroke-width:2px
+    style op fill:#FFDAAB,stroke:#FF9933,stroke-width:2px
+```
+
+## 🔧 Installation
+
+### Prerequisites
+*   Python 3.8 or higher
+*   pip (Python package installer)
+
+### Install from Source (Recommended)
+```bash
+# 1. Clone the repository
+git clone https://github.com/Felixburton7/flexseq.git
+cd flexseq
+
+# 2. Install the package in editable mode
+pip install -e .
+```
+*This installs the package such that changes to the source code are immediately reflected.*
+
+### Dependencies
+Core dependencies are managed by `setuptools` via `pyproject.toml` and `setup.py`. Key dependencies include:
+`numpy`, `pandas`, `scikit-learn`, `torch`, `pyyaml`, `click`, `matplotlib`, `seaborn`, `joblib`, `tqdm`, `optuna`.
+
+## 🚀 Quick Start
+
+*(Run commands from the root directory: `/home/s_felix/flexseq`)*
+
+### Basic Usage
+```bash
+# Train Random Forest model at 320K using default config
+flexseq train --temperature 320 --model random_forest
+
+# Evaluate the trained Random Forest model at 320K
+flexseq evaluate --temperature 320 --model random_forest
+# Check output in ./output/outputs_320/evaluation_results.csv
+
+# Predict RMSF for new proteins at 320K using the best model
+# (Assumes new_proteins.csv is in ./data and formatted correctly)
+flexseq predict --input ./data/new_proteins.csv --temperature 320 --output ./output/new_proteins_pred_320.csv
+```
+
+### Advanced Usage
+```bash
+# Train Neural Network using OmniFlex mode at 348K
+# (Requires esm_rmsf column in temperature_348_train.csv)
+flexseq train --mode omniflex --temperature 348 --model neural_network
+
+# Train enabled models on all available temperatures
+flexseq train-all-temps
+
+# Run the full pipeline (train, evaluate, analyze) for 379K
+flexseq run --temperature 379
+
+# Generate data comparing Random Forest results across all temperatures
+flexseq compare-temperatures --model random_forest
+# Check output in ./output/outputs_comparison/
+```
+
+## 📥 Input Data
+
+FlexSeq expects temperature-specific CSV files in the data directory (`./data` by default).
+
+*   **File Naming:** Defined by `dataset.file_pattern` in config (e.g., `temperature_320_train.csv`).
+*   **Required Columns for Training:** `domain_id`, `resid`, `resname`, `rmsf_{temperature}`.
+*   **Optional/Recommended Columns:** `protein_size`, `normalized_resid`, `core_exterior`, `relative_accessibility`, `dssp`, `phi`, `psi`.
+*   **OmniFlex Mode Columns:** `esm_rmsf` (required if `use_esm: true`), `voxel_rmsf` (required if `use_voxel: true`).
+
+| Column                      | Description                                             | Type    | Example        | Notes                                       |
+| :-------------------------- | :------------------------------------------------------ | :------ | :------------- | :------------------------------------------ |
+| `domain_id`                 | Protein domain identifier                             | string  | `1a0aA00`      | Used for grouping and stratified splitting |
+| `resid`                     | Residue ID (position in chain)                        | int     | `42`           |                                             |
+| `resname`                   | 3-letter amino acid code                                | string  | `ALA`          |                                             |
+| `rmsf_{temperature}`        | **Target:** RMSF value at specified temperature       | float   | `0.835`        | e.g., `rmsf_320` for T=320K                 |
+| `protein_size`              | *Feature:* Total # residues in protein/domain         | int     | `153`          | Calculated if missing                       |
+| `normalized_resid`          | *Feature:* Residue pos. normalized to 0-1             | float   | `0.274`        | Calculated if missing                       |
+| `core_exterior`             | *Source:* Location ('interior' or 'surface')          | string  | `surface`      | Encoded to `core_exterior_encoded`        |
+| `relative_accessibility`    | *Feature:* Solvent accessibility measure              | float   | `0.65`         | Typically 0-1                               |
+| `dssp`                      | *Source:* Secondary structure (DSSP codes)            | string  | `H`, `E`, `C`  | Encoded to `secondary_structure_encoded`    |
+| `phi`, `psi`                | *Source:* Backbone dihedral angles (degrees)          | float   | `-65.3`, `120.7` | Normalized to `phi_norm`, `psi_norm`        |
+| `resname_encoded`           | *Feature:* Numerical encoding of `resname`            | int     | `1`            | Generated if `resname` present              |
+| `core_exterior_encoded`     | *Feature:* Binary encoding (0=core, 1=surface)        | int     | `1`            | Generated if `core_exterior` present        |
+| `secondary_structure_encoded`| *Feature:* Numerical encoding of `dssp` (0=H, 1=E, 2=Loop)| int| `0`            | Generated if `dssp` present                 |
+| `phi_norm`, `psi_norm`      | *Feature:* Normalized angles [-1, 1]                  | float   | `-0.36`, `0.67` | Generated if `phi`/`psi` present           |
+| `esm_rmsf`                  | *Feature (OmniFlex):* Prediction from ESM           | float   | `0.75`         | Required if `use_esm: true`               |
+| `voxel_rmsf`                | *Feature (OmniFlex):* Prediction from Voxels        | float   | `0.81`         | Required if `use_voxel: true`             |
+
+*The pipeline attempts data cleaning and feature generation (`flexseq/data/processor.py`). Missing optional source columns will prevent generation of derived features.*
+
+## 📤 Output Data
+
+Output files are saved to the configured `paths.output_dir` (default: `./output`), often within temperature-specific subdirectories (`outputs_{T}`).
+
+| Output Type                 | Description                                             | Format | Default Path (`T`=temperature)                      |
+| :-------------------------- | :------------------------------------------------------ | :----- | :-------------------------------------------------- |
+| 💾 **Trained Models**       | Saved state of trained models                           | `.pkl` | `./models/models_{T}/{model_name}.pkl`              |
+| 📊 **Evaluation Metrics**   | Summary of performance metrics for each model           | CSV    | `./output/outputs_{T}/evaluation_results.csv`     |
+| 📈 **Detailed Results**     | Eval data + predictions + errors + uncertainty        | CSV    | `./output/outputs_{T}/all_results.csv`            |
+| 🧩 **Domain Metrics**        | Performance metrics aggregated per domain               | CSV    | `./output/outputs_{T}/domain_metrics.csv`         |
+| 🔮 **Predictions**          | Predictions on new input data                           | CSV    | `./output/{input_base}_predictions_{T}.csv`       |
+| ⭐ **Feature Importance**   | Importance scores for each feature per model            | CSV, PNG| `./output/outputs_{T}/feature_importance/`        |
+| 🧬 **Residue Analysis**     | Data for error analysis by AA, position, structure    | CSV, PNG| `./output/outputs_{T}/residue_analysis/`          |
+| 🌡️ **Temp Comparison**     | Combined results and metrics across temperatures        | CSV    | `./output/outputs_comparison/`                    |
+| 📉 **Training History (NN)**| Epoch-wise loss/metrics for Neural Network              | CSV, PNG| `./output/outputs_{T}/training_performance/`      |
+| 📊 **Visualization Data**   | Pre-formatted data for generating plots externally      | CSV    | `./output/outputs_{T}/visualization_data/`        |
+
+## 🤖 Models
+
+FlexSeq implements Random Forest and Neural Network models, configurable in the `models` section of the config YAML.
+
+| Model             | Implementation             | Key Config Parameters (`models.{name}.*`)                                                                                                | Uncertainty Method               | Hyperparameter Optimization      |
+| :---------------- | :------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------- | :----------------------------- |
+| 🌲 **Random Forest** | `RandomForestModel`        | `n_estimators`, `max_depth`, `min_samples_split`, `min_samples_leaf`, `max_features`, `bootstrap`, `randomized_search` (uses Scikit-learn's `RandomizedSearchCV`) | Variance across tree predictions | `RandomizedSearchCV` (built-in)|
+| 🧠 **Neural Network**| `NeuralNetworkModel`       | `architecture` (`hidden_layers`, `activation`, `dropout`), `training` (`optimizer`, `learning_rate`, `batch_size`, `epochs`, `early_stopping`), `hyperparameter_optimization` (uses Optuna) | Monte Carlo Dropout sampling   | Optuna (Bayesian/Random/Grid)  |
+
+*   See `flexseq/models/base.py` for the base class definition.
+*   Model parameters and optimization settings are highly configurable (see `default_config.yaml`).
+
+## 📈 Analysis & Visualization
+
+The pipeline focuses on generating structured CSV data to facilitate detailed analysis and external visualization, complementing the basic plots it generates directly.
+
+**Generated Data/Plots Enable Analysis Of:**
+*   **Overall Performance:** R², RMSE, MAE comparisons between models and across temperatures.
+*   **Prediction Accuracy:** Scatter plots of Actual vs. Predicted RMSF, optionally with density contours or colored by residue properties.
+*   **Error Analysis:** Distribution of errors (absolute, relative) grouped by amino acid type, secondary structure, sequence position, or surface exposure.
+*   **Feature Contributions:** Ranked list/bar chart of feature importances (using permutation importance).
+*   **Temperature Dependence:** Correlation of RMSF values between temperatures, trends of metrics vs. temperature, linear regression of RMSF change per residue.
+*   **Model Behavior:** RMSF profiles along the sequence for specific domains, training/validation curves for Neural Networks.
+
+*Refer to `flexseq/utils/visualization.py` for the functions generating plot data and basic plots.*
+
+## ⚙️ Configuration
+
+Pipeline behavior is controlled via YAML configuration files.
+
+*   **Default:** `default_config.yaml` (packaged with the library).
+*   **User:** Specify a custom YAML via `flexseq <command> --config path/to/my_config.yaml`.
+*   **Overrides:**
+    *   **Environment Variables:** Prefix with `FLEXSEQ_`, use underscores for nesting (e.g., `FLEXSEQ_MODELS_RANDOM_FOREST_N_ESTIMATORS=500`).
+    *   **CLI Parameters:** Use `--param key=value` (e.g., `--param dataset.split.test_size=0.25`). CLI overrides take highest precedence.
+
+**Example Snippet (`default_config.yaml`):**
+```yaml
+# FlexSeq Configuration
+
+paths:
+  data_dir: ./data                # Data directory
+  output_dir: ./output            # Output directory
+  models_dir: ./models            # Saved models directory
+
+mode:
+  active: "omniflex"              # Using advanced mode ("flexseq" or "omniflex")
+  omniflex:
+    use_esm: true                 # Use ESM embeddings feature
+    use_voxel: false              # Enable 3D voxel feature (if available)
+
+temperature:
+  current: 348                    # Current temperature to process
+  available: [320, 348, 379, 413, 450, "average"] # Available datasets
+
+dataset:
+  file_pattern: "temperature_{temperature}_train.csv" # How to find data files
+  features:
+    use_features:                 # Features to use as model input
+      protein_size: true
+      normalized_resid: true
+      relative_accessibility: true
+      core_exterior_encoded: true
+      secondary_structure_encoded: true
+      phi_norm: true
+      psi_norm: true
+      resname_encoded: true
+      esm_rmsf: true              # OmniFlex only
+      voxel_rmsf: false           # OmniFlex only
+    window:                       # Window feature settings
+      enabled: true
+      size: 5                     # Window = size*2 + 1 residues
+  target: rmsf_{temperature}      # Target variable column name
+  split:
+    test_size: 0.2
+    validation_size: 0.15
+    stratify_by_domain: true      # Keep domains together during split
+
+models:
+  random_forest:
+    enabled: true
+    n_estimators: 500
+    max_features: 0.7
+    randomized_search:            # Hyperparameter optimization settings
+      enabled: true
+      n_iter: 50
+      cv: 5
+      param_distributions:        # Search space
+        n_estimators: [100, 200, 300, 500, 800]
+        # ... other parameters
+  neural_network:
+    enabled: true
+    architecture:
+      hidden_layers: [256, 128, 64]
+    # ... other NN parameters and optimization settings
+```
+*Refer to the full `default_config.yaml` for all options.*
+
+## 💻 Command-Line Interface
+
+The `flexseq` command provides structured access to pipeline functions.
+
+| Command                 | Description                                              | Example                                              |
+| :---------------------- | :------------------------------------------------------- | :--------------------------------------------------- |
+| `train`                 | Train models for a specific temperature.                 | `flexseq train --temp 320 --model random_forest`     |
+| `evaluate`              | Evaluate trained models.                                 | `flexseq evaluate --temp 320 --model random_forest`  |
+| `predict`               | Generate predictions for new input data.                 | `flexseq predict --input new.csv --temp 320`         |
+| `run`                   | Execute the full train, evaluate, analyze pipeline.      | `flexseq run --temp 348 --mode omniflex`             |
+| `train-all-temps`       | Train models for all temperatures in `temperature.available`. | `flexseq train-all-temps`                            |
+| `compare-temperatures`  | Generate data comparing results across temperatures.     | `flexseq compare-temperatures --model random_forest` |
+| `preprocess`            | Only load, clean, and process data; save output.       | `flexseq preprocess --input raw.csv --out proc.csv`  |
+| `list-models`           | List registered model names.                             | `flexseq list-models`                                |
+| `list-temperatures`     | List temperatures defined in the configuration.          | `flexseq list-temperatures`                          |
+
+**Common Options:** `--temperature` (`--temp`), `--model`, `--config`, `--param`, `--mode`, `--input`, `--output`. Use `flexseq <command> --help` for details.
+
+## 📚 Documentation
+
+*(Placeholder links - adapt if full documentation exists)*
+*   [Installation Guide](https://flexseq.readthedocs.io/en/latest/installation.html)
+*   [User Guide](https://flexseq.readthedocs.io/en/latest/user_guide.html)
+*   [API Reference](https://flexseq.readthedocs.io/en/latest/api.html)
+*   [Examples](https://flexseq.readthedocs.io/en/latest/examples.html)
+
+## 📝 Citation
+
+If you use FlexSeq in your research, please cite the repository:
+```bibtex
+@software{burton2023flexseq,
+  author = {Burton, Felix},
+  title = {FlexSeq: Protein Flexibility Prediction Pipeline},
+  year = {2023},
+  url = {https://github.com/Felixburton7/flexseq}
+}
+```
+
+## 🤝 Contributing
+
+Contributions are welcome! Please follow standard GitHub practices (fork, feature branch, pull request) or refer to the `CONTRIBUTING.md` file if present.
+
+## 📄 License
+
+This project is licensed under the MIT License. See the `LICENSE` file for details.
+
+## 👏 Acknowledgements
+
+*   Developed by Felix Burton ([@Felixburton7](https://github.com/Felixburton7)).
+*   Utilizes numerous open-source libraries including Scikit-learn, PyTorch, Pandas, NumPy, Matplotlib, Seaborn, Click, PyYAML, TQDM, Joblib, and Optuna.
+```
 ### Core Module Files ###
 ---------------------------------------------------------
 ===== FILE: flexseq/__init__.py =====
@@ -3736,27 +4451,35 @@ class NeuralNetworkModel(BaseModel):
         # Define objective function for Optuna
         def objective(trial):
             # Suggest hyperparameters
+            hidden_layers_options = param_grid.get('hidden_layers', [[64, 32], [128, 64], [32, 16]])
             architecture = {
-                'hidden_layers': trial.suggest_categorical('hidden_layers', param_grid.get(
-                    'hidden_layers', [[64, 32], [128, 64], [32, 16]])),
-                'activation': trial.suggest_categorical('activation', param_grid.get(
-                    'activation', ['relu', 'leaky_relu'])),
-                'dropout': trial.suggest_float('dropout', *param_grid.get(
-                    'dropout', [0.1, 0.5]), step=0.1)
+                'hidden_layers': trial.suggest_categorical('hidden_layers', hidden_layers_options),
+                'activation': trial.suggest_categorical('activation', param_grid.get('activation', ['relu', 'leaky_relu'])),
+                'dropout': trial.suggest_float('dropout', 
+                                            low=min(param_grid.get('dropout', [0.1, 0.5])),
+                                            high=max(param_grid.get('dropout', [0.1, 0.5])))
             }
             
+            learning_rates = param_grid.get('learning_rate', [0.0001, 0.01])
+            batch_sizes = param_grid.get('batch_size', [16, 32, 64])
+            patience_range = param_grid.get('patience', [5, 15])
+            epochs_range = param_grid.get('epochs', [50, 100])
+            optimizer_options = param_grid.get('optimizer', ['adam', 'rmsprop'])
+            
             training = {
-                'optimizer': trial.suggest_categorical('optimizer', param_grid.get(
-                    'optimizer', ['adam', 'rmsprop'])),
-                'learning_rate': trial.suggest_float('learning_rate', *param_grid.get(
-                    'learning_rate', [0.0001, 0.01]), log=True),
-                'batch_size': trial.suggest_categorical('batch_size', param_grid.get(
-                    'batch_size', [16, 32, 64])),
+                'optimizer': trial.suggest_categorical('optimizer', optimizer_options),
+                'learning_rate': trial.suggest_float('learning_rate', 
+                                                low=min(learning_rates),
+                                                high=max(learning_rates),
+                                                log=True),
+                'batch_size': trial.suggest_categorical('batch_size', batch_sizes),
                 'early_stopping': True,
-                'patience': trial.suggest_int('patience', *param_grid.get(
-                    'patience', [5, 15])),
-                'epochs': trial.suggest_int('epochs', *param_grid.get(
-                    'epochs', [50, 100]))
+                'patience': trial.suggest_int('patience', 
+                                            low=min(patience_range),
+                                            high=max(patience_range)),
+                'epochs': trial.suggest_int('epochs', 
+                                        low=min(epochs_range),
+                                        high=max(epochs_range))
             }
             
             # Perform cross-validation
@@ -3797,8 +4520,16 @@ class NeuralNetworkModel(BaseModel):
         logger.info(f"Best parameters: {best_params}")
         
         # Construct best parameters dictionary
+        best_hidden_layers = param_grid.get('hidden_layers', [[64, 32], [128, 64], [32, 16]])
+        hidden_layers_idx = 0
+        if 'hidden_layers' in best_params:
+            for i, layers in enumerate(param_grid.get('hidden_layers', [])):
+                if str(layers) == str(best_params['hidden_layers']):
+                    hidden_layers_idx = i
+                    break
+        
         best_arch = {
-            'hidden_layers': best_params.get('hidden_layers', self.architecture.get('hidden_layers', [64, 32])),
+            'hidden_layers': param_grid.get('hidden_layers', [[64, 32]])[hidden_layers_idx] if param_grid.get('hidden_layers') else [64, 32],
             'activation': best_params.get('activation', self.architecture.get('activation', 'relu')),
             'dropout': best_params.get('dropout', self.architecture.get('dropout', 0.2))
         }
@@ -4405,351 +5136,502 @@ def log_data_summary(summary: Dict[str, Any]) -> None:
     
     logger.info("========================")
 ===== FILE: flexseq/data/processor.py =====
+# flexseq/data/processor.py
 """
 Data processing for the FlexSeq ML pipeline.
 
 This module provides functions for preprocessing protein data,
-including feature engineering, window-based feature generation,
-and handling missing values.
+including cleaning, feature engineering, window-based feature generation,
+data splitting, and preparation for machine learning models.
 """
 
 import os
 import logging
 from functools import lru_cache
-from typing import Dict, List, Tuple, Optional, Any, Union, Set
+from typing import Dict, List, Tuple, Optional, Any, Union
 
 import numpy as np
 import pandas as pd
+from sklearn.model_selection import train_test_split # For split_data
 
-from flexseq.data.loader import load_file, load_temperature_data
+# Assuming flexseq.data.loader provides these:
+from flexseq.data.loader import load_file, load_temperature_data, lru_cache, validate_data_columns
+from flexseq.utils.helpers import progress_bar # Assuming progress_bar helper exists
 
 logger = logging.getLogger(__name__)
 
+# --- Amino Acid and Secondary Structure Mappings ---
+AA_MAP = {
+    'ALA': 1, 'ARG': 2, 'ASN': 3, 'ASP': 4, 'CYS': 5, 'GLN': 6,
+    'GLU': 7, 'GLY': 8, 'HIS': 12, 'HSD': 9, 'HSE': 10, 'HSP': 11, # Group Histidines
+    'ILE': 13, 'LEU': 14, 'LYS': 15, 'MET': 16, 'PHE': 17, 'PRO': 23, 
+    'SER': 18, 'THR': 19, 'TRP': 20, 'TYR': 21, 'VAL': 22,
+    'UNK': 0, None: 0 # Handle unknown and potential None values
+}
+
+SS_MAP = {
+    'H': 0, 'G': 0, 'I': 0, # Helices
+    'E': 1, 'B': 1,         # Strands
+    'T': 2, 'S': 2, 'C': 2, # Coil/Turn/Bend
+    '-': 2, None: 2         # Unknown/None default to Coil
+}
+
+# --- Data Cleaning and Basic Feature Engineering ---
+
 def clean_data(df: pd.DataFrame) -> pd.DataFrame:
     """
-    Clean input data by handling missing values with appropriate defaults.
-    
+    Cleans input DataFrame by handling missing values and ensuring types.
+
     Args:
-        df: Input DataFrame with protein data
-        
+        df: Input DataFrame with raw protein data.
+
     Returns:
-        Cleaned DataFrame with no missing values
+        Cleaned DataFrame.
     """
+    logger.debug(f"Starting data cleaning on DataFrame with shape {df.shape}.")
     cleaned_df = df.copy()
-    
-    # Fill missing secondary structure with coil (most common)
-    if 'dssp' in cleaned_df.columns:
-        cleaned_df['dssp'] = cleaned_df['dssp'].fillna('C')
-        
-    # Fill missing accessibility with moderate value
-    if 'relative_accessibility' in cleaned_df.columns:
-        cleaned_df['relative_accessibility'] = pd.to_numeric(
-            cleaned_df['relative_accessibility'], errors='coerce'
-        ).fillna(0.5)
-        
-    # Fill missing core_exterior with default "core"
-    if 'core_exterior' in cleaned_df.columns:
-        cleaned_df['core_exterior'] = cleaned_df['core_exterior'].fillna('core')
-        
-    # Fill missing phi/psi angles with neutral values
-    if 'phi' in cleaned_df.columns:
-        cleaned_df['phi'] = pd.to_numeric(cleaned_df['phi'], errors='coerce').fillna(0.0)
-    if 'psi' in cleaned_df.columns:
-        cleaned_df['psi'] = pd.to_numeric(cleaned_df['psi'], errors='coerce').fillna(0.0)
-        
-    # Add normalized residue position if missing
-    if 'normalized_resid' not in cleaned_df.columns and 'resid' in cleaned_df.columns:
-        cleaned_df['normalized_resid'] = cleaned_df.groupby('domain_id')['resid'].transform(
-            lambda x: (x - x.min()) / max(x.max() - x.min(), 1)
-        )
-        
-    # Add missing encoded features if needed
-    if 'resname' in cleaned_df.columns and 'resname_encoded' not in cleaned_df.columns:
-        # Simple ordinal encoding for amino acids
-        aa_map = {
-            'ALA': 1, 'ARG': 2, 'ASN': 3, 'ASP': 4, 'CYS': 5,
-            'GLN': 6, 'GLU': 7, 'GLY': 8, 'HSD': 9, 'HSE': 10,
-            'HSP': 11, 'HIS': 12, 'ILE': 13, 'LEU': 14, 'LYS': 15,
-            'MET': 16, 'PHE': 17, 'SER': 18, 'THR': 19, 'TRP': 20,
-            'TYR': 21, 'VAL': 22, 'UNK': 0
-        }
-        cleaned_df['resname_encoded'] = cleaned_df['resname'].map(
-            lambda x: aa_map.get(x, 0) if x else 0
-        )
-        
-    if 'core_exterior' in cleaned_df.columns and 'core_exterior_encoded' not in cleaned_df.columns:
-        # Binary encoding for core/exterior
-        cleaned_df['core_exterior_encoded'] = cleaned_df['core_exterior'].map(
-            lambda x: 0 if x == 'core' else 1
-        )
-        
-    if 'dssp' in cleaned_df.columns and 'secondary_structure_encoded' not in cleaned_df.columns:
-        # Encode secondary structure
-        ss_map = {
-            'H': 0,  # Alpha helix
-            'G': 0,  # 3/10 helix (grouped with alpha)
-            'I': 0,  # Pi helix (grouped with alpha)
-            'E': 1,  # Beta sheet
-            'B': 1,  # Beta bridge (grouped with sheet)
-            'T': 2,  # Turn
-            'S': 2,  # Bend (grouped with turn)
-            'C': 2,  # Coil
-            '-': 2,  # Unknown (default to coil)
-        }
-        cleaned_df['secondary_structure_encoded'] = cleaned_df['dssp'].map(
-            lambda x: ss_map.get(x, 2) if x else 2
-        )
-        
-    # Add normalized phi/psi angles if needed
-    if 'phi' in cleaned_df.columns and 'phi_norm' not in cleaned_df.columns:
-        # Normalize angles to [-1, 1] range
-        cleaned_df['phi_norm'] = cleaned_df['phi'].map(
-            lambda x: (x % 360) / 180 - 1 if pd.notnull(x) else 0
-        )
-        
-    if 'psi' in cleaned_df.columns and 'psi_norm' not in cleaned_df.columns:
-        cleaned_df['psi_norm'] = cleaned_df['psi'].map(
-            lambda x: (x % 360) / 180 - 1 if pd.notnull(x) else 0
-        )
-    
-    # Handle OmniFlex specific features
-    # Fill missing esm_rmsf with mean value
-    if 'esm_rmsf' in cleaned_df.columns:
-        cleaned_df['esm_rmsf'] = pd.to_numeric(cleaned_df['esm_rmsf'], errors='coerce')
-        mean_esm = cleaned_df['esm_rmsf'].mean()
-        cleaned_df['esm_rmsf'] = cleaned_df['esm_rmsf'].fillna(mean_esm)
-    
-    # Fill missing voxel_rmsf with mean value
-    if 'voxel_rmsf' in cleaned_df.columns:
-        cleaned_df['voxel_rmsf'] = pd.to_numeric(cleaned_df['voxel_rmsf'], errors='coerce')
-        mean_voxel = cleaned_df['voxel_rmsf'].mean()
-        cleaned_df['voxel_rmsf'] = cleaned_df['voxel_rmsf'].fillna(mean_voxel)
-    
+
+    # Define fill values for different column types/meanings
+    fill_values = {
+        'dssp': 'C',                         # Default SS to Coil
+        'relative_accessibility': 0.5,       # Moderate accessibility
+        'core_exterior': 'core',             # Assume core if unknown
+        'phi': 0.0,                          # Neutral angle
+        'psi': 0.0,                          # Neutral angle
+        'esm_rmsf': lambda d: d.mean(),      # Fill with mean of existing values
+        'voxel_rmsf': lambda d: d.mean()     # Fill with mean of existing values
+    }
+
+    for col, fill_val in fill_values.items():
+        if col in cleaned_df.columns:
+            if callable(fill_val): # Handle functions like mean()
+                mean_val = fill_val(cleaned_df[col].dropna()) if not cleaned_df[col].dropna().empty else 0.0
+                if col in ['esm_rmsf', 'voxel_rmsf']: # Ensure numeric type before filling
+                     cleaned_df[col] = pd.to_numeric(cleaned_df[col], errors='coerce')
+                cleaned_df[col].fillna(mean_val, inplace=True)
+                logger.debug(f"Filled NaNs in '{col}' with calculated value: {mean_val:.4f}")
+            else:
+                 if col in ['esm_rmsf', 'voxel_rmsf', 'relative_accessibility', 'phi', 'psi']: # Ensure numeric type
+                     cleaned_df[col] = pd.to_numeric(cleaned_df[col], errors='coerce')
+                 cleaned_df[col].fillna(fill_val, inplace=True)
+                 logger.debug(f"Filled NaNs in '{col}' with default value: {fill_val}")
+
+    logger.debug(f"Data cleaning finished. DataFrame shape: {cleaned_df.shape}")
     return cleaned_df
+
+def _add_derived_features(df: pd.DataFrame) -> pd.DataFrame:
+    """Adds derived features like normalized position and encoded categories."""
+    logger.debug("Adding derived features...")
+    derived_df = df.copy()
+
+    # 1. Normalized Residue Position
+    if 'normalized_resid' not in derived_df.columns and 'resid' in derived_df.columns and 'domain_id' in derived_df.columns:
+        # Calculate max - min per group, handle single-residue domains (max-min=0)
+        grp = derived_df.groupby('domain_id')['resid']
+        min_res = grp.transform('min')
+        max_minus_min = (grp.transform('max') - min_res).replace(0, 1) # Avoid division by zero
+        derived_df['normalized_resid'] = (derived_df['resid'] - min_res) / max_minus_min
+        logger.debug("Added 'normalized_resid'.")
+
+    # 2. Encoded Residue Name
+    if 'resname' in derived_df.columns and 'resname_encoded' not in derived_df.columns:
+        derived_df['resname_encoded'] = derived_df['resname'].map(AA_MAP).fillna(0).astype(int)
+        logger.debug("Added 'resname_encoded'.")
+
+    # 3. Encoded Core/Exterior
+    if 'core_exterior' in derived_df.columns and 'core_exterior_encoded' not in derived_df.columns:
+        # Ensure 'core' maps to 0, others (e.g., 'surface', 'exterior') to 1
+        derived_df['core_exterior_encoded'] = derived_df['core_exterior'].apply(
+            lambda x: 0 if isinstance(x, str) and x.lower() == 'core' else 1
+        ).astype(int)
+        logger.debug("Added 'core_exterior_encoded'.")
+
+    # 4. Encoded Secondary Structure
+    if 'dssp' in derived_df.columns and 'secondary_structure_encoded' not in derived_df.columns:
+        # Apply mapping, fill potential NaNs introduced by unknown DSSP codes
+        derived_df['secondary_structure_encoded'] = derived_df['dssp'].map(SS_MAP).fillna(2).astype(int)
+        logger.debug("Added 'secondary_structure_encoded'.")
+
+    # 5. Normalized Phi/Psi Angles
+    if 'phi' in derived_df.columns and 'phi_norm' not in derived_df.columns:
+        # Normalize angle to [-1, 1] using sine for cyclical nature
+        derived_df['phi_norm'] = np.sin(np.radians(derived_df['phi'].fillna(0)))
+        logger.debug("Added 'phi_norm'.")
+    if 'psi' in derived_df.columns and 'psi_norm' not in derived_df.columns:
+        derived_df['psi_norm'] = np.sin(np.radians(derived_df['psi'].fillna(0)))
+        logger.debug("Added 'psi_norm'.")
+
+    return derived_df
+
+
+# --- Domain Filtering ---
 
 def filter_domains(df: pd.DataFrame, config: Dict[str, Any]) -> pd.DataFrame:
     """
-    Filter data based on domain inclusion/exclusion rules.
-    
+    Filters DataFrame based on domain inclusion/exclusion and size rules.
+
     Args:
-        df: Input DataFrame with protein data
-        config: Configuration dictionary with domain filtering rules
-        
+        df: Input DataFrame with protein data.
+        config: Configuration dictionary with domain filtering rules.
+
     Returns:
-        Filtered DataFrame
+        Filtered DataFrame.
     """
     domain_config = config.get("dataset", {}).get("domains", {})
-    
-    # Start with a copy of the input data
+    if not domain_config: # No filtering rules specified
+        return df.copy()
+
     filtered_df = df.copy()
-    
-    # Filter by domain inclusion if specified
-    include_domains = domain_config.get("include", [])
+    initial_rows = len(filtered_df)
+    logger.debug(f"Starting domain filtering from {initial_rows} rows.")
+
+    # Apply inclusion/exclusion lists
+    include_domains = set(domain_config.get("include", []))
+    exclude_domains = set(domain_config.get("exclude", []))
+
     if include_domains:
         filtered_df = filtered_df[filtered_df['domain_id'].isin(include_domains)]
-        
-    # Filter by domain exclusion if specified
-    exclude_domains = domain_config.get("exclude", [])
+        logger.debug(f"Applied inclusion filter: {len(filtered_df)} rows remain.")
     if exclude_domains:
         filtered_df = filtered_df[~filtered_df['domain_id'].isin(exclude_domains)]
-        
-    # Filter by protein size if specified
+        logger.debug(f"Applied exclusion filter: {len(filtered_df)} rows remain.")
+
+    # Apply size filters (calculate sizes only if needed)
     min_size = domain_config.get("min_protein_size", 0)
-    if min_size > 0:
-        # Get domain sizes
-        domain_sizes = filtered_df.groupby('domain_id').size()
-        valid_domains = domain_sizes[domain_sizes >= min_size].index
-        filtered_df = filtered_df[filtered_df['domain_id'].isin(valid_domains)]
-        
-    max_size = domain_config.get("max_protein_size")
-    if max_size is not None:
-        # Get domain sizes
-        domain_sizes = filtered_df.groupby('domain_id').size()
-        valid_domains = domain_sizes[domain_sizes <= max_size].index
-        filtered_df = filtered_df[filtered_df['domain_id'].isin(valid_domains)]
-        
+    max_size = domain_config.get("max_protein_size") # None means no upper limit
+
+    if min_size > 0 or max_size is not None:
+        if filtered_df.empty:
+             logger.warning("DataFrame is empty before size filtering.")
+        else:
+            domain_sizes = filtered_df.groupby('domain_id')['resid'].transform('size') # Efficient size calculation
+            if min_size > 0:
+                filtered_df = filtered_df[domain_sizes >= min_size]
+                logger.debug(f"Applied min size filter ({min_size}): {len(filtered_df)} rows remain.")
+            if max_size is not None:
+                filtered_df = filtered_df[domain_sizes <= max_size]
+                logger.debug(f"Applied max size filter ({max_size}): {len(filtered_df)} rows remain.")
+
+    final_rows = len(filtered_df)
+    if final_rows < initial_rows:
+         logger.info(f"Domain filtering removed {initial_rows - final_rows} rows. {final_rows} rows remaining.")
+    else:
+         logger.debug("No rows removed by domain filtering.")
+
     return filtered_df
 
-def create_window_features(
-    df: pd.DataFrame, 
-    window_size: int, 
+# --- Window Feature Generation (Optimized) ---
+
+def create_window_features_optimized(
+    df: pd.DataFrame,
+    window_size: int,
     feature_cols: List[str]
 ) -> pd.DataFrame:
     """
-    Create window-based features for each domain, respecting domain boundaries.
-    
+    Creates window-based features using vectorized operations and pd.concat.
+
+    This version is optimized to reduce DataFrame fragmentation warnings and
+    improve performance compared to iterative column addition.
+
     Args:
-        df: Input DataFrame with protein data
-        window_size: Number of residues on each side to include in window
-        feature_cols: List of feature column names to use for window features
-        
+        df: Input DataFrame with protein data, indexed uniquely.
+        window_size: Number of residues on each side (k). Window is size 2k+1.
+        feature_cols: List of *existing* feature column names in df to use.
+
     Returns:
-        DataFrame with added window features
+        DataFrame with added window features.
     """
-    result_df = df.copy()
-    
-    # Process each domain separately to respect domain boundaries
-    for domain_id, domain_df in df.groupby('domain_id'):
-        # Sort by residue ID to ensure correct window creation
-        domain_df = domain_df.sort_values('resid')
-        
-        # Create window features for each feature column
-        for feature in feature_cols:
-            if feature not in domain_df.columns:
-                continue
-                
-            feature_values = domain_df[feature].values
-            
-            # Create columns for each window position
+    if 'domain_id' not in df.columns or 'resid' not in df.columns:
+        raise ValueError("DataFrame must contain 'domain_id' and 'resid' columns for windowing.")
+    if window_size <= 0:
+        logger.warning("Window size must be positive. Skipping window feature creation.")
+        return df.copy()
+
+    original_cols = set(df.columns)
+    # Only use features that actually exist in the input df
+    valid_feature_cols = [col for col in feature_cols if col in original_cols]
+
+    if not valid_feature_cols:
+        logger.warning("No valid feature columns found for windowing.")
+        return df.copy()
+
+    all_domain_windows_dfs = [] # Collect DataFrames of window features per domain
+    logger.info(f"Creating window features (k={window_size}) for {len(valid_feature_cols)} features using optimized method...")
+
+    # Ensure the DataFrame index is unique if it's not already the default RangeIndex
+    if not isinstance(df.index, pd.RangeIndex) or not df.index.is_unique:
+        logger.debug("Resetting index for reliable window feature alignment.")
+        df_indexed = df.reset_index(drop=True) # Work with a re-indexed copy
+    else:
+        df_indexed = df # Use original if index is okay
+
+    # Process each domain
+    grouped_domains = df_indexed.groupby('domain_id', observed=False, sort=False) # sort=False might be faster
+    for domain_id, domain_indices in progress_bar(grouped_domains.groups.items(), desc="Processing Domains"):
+        domain_df = df_indexed.loc[domain_indices].sort_values('resid') # Essential to sort by position
+        domain_window_series_dict = {} # Collect {col_name: pd.Series} for this domain
+
+        for feature in valid_feature_cols:
+            feature_values = domain_df[feature].values # Efficient NumPy array access
+            dtype = feature_values.dtype
+            # Use a sensible default fill value based on dtype (0 for int, NaN for float)
+            default_fill = 0 if np.issubdtype(dtype, np.integer) else np.nan
+
             for offset in range(-window_size, window_size + 1):
-                if offset == 0:
-                    continue  # Skip current position (already exists)
-                    
+                if offset == 0: continue # Skip self
+
                 col_name = f"{feature}_offset_{offset}"
-                
-                # Create offset values with appropriate padding
-                offset_values = np.full_like(feature_values, np.nan)
-                
-                if offset < 0:
-                    # Negative offset (previous residues)
+                # Pre-allocate array with default fill value
+                offset_values = np.full_like(feature_values, fill_value=default_fill, dtype=dtype)
+
+                # Apply shifts using slicing (vectorized)
+                if offset < 0: # Look backwards (use values from start)
                     offset_values[-offset:] = feature_values[:offset]
-                else:
-                    # Positive offset (next residues)
+                else: # Look forwards (use values towards end)
                     offset_values[:-offset] = feature_values[offset:]
-                    
-                # Update the result dataframe
-                result_df.loc[domain_df.index, col_name] = offset_values
-    
-    # Fill missing window values with defaults
-    for col in result_df.columns:
-        if '_offset_' in col:
-            # Extract base feature name
-            base_feature = col.split('_offset_')[0]
-            
-            # For categorical features use mode, for numeric use median
-            if base_feature in ['resname_encoded', 'core_exterior_encoded', 'secondary_structure_encoded']:
-                # Use mode (most common value) for categorical
-                mode_val = result_df[base_feature].mode()[0]
-                result_df[col] = result_df[col].fillna(mode_val)
-            else:
-                # Use median for numeric features
-                median_val = result_df[base_feature].median()
-                result_df[col] = result_df[col].fillna(median_val)
-    
+
+                # Store as Series with the correct index from domain_df
+                domain_window_series_dict[col_name] = pd.Series(offset_values, index=domain_df.index, name=col_name)
+
+        # Combine all window series for this domain into one DataFrame
+        if domain_window_series_dict:
+            all_domain_windows_dfs.append(pd.concat(domain_window_series_dict.values(), axis=1))
+
+    # Concatenate window features from all domains (aligns by original index)
+    if not all_domain_windows_dfs:
+         logger.warning("No window features were generated.")
+         return df.copy() # Return a copy of the original df
+
+    logger.info("Concatenating window features for all domains...")
+    window_features_combined = pd.concat(all_domain_windows_dfs)
+
+    # Merge window features back to the *original* df using the index
+    result_df = pd.concat([df, window_features_combined], axis=1)
+
+    # --- NaN Filling (After all columns are combined) ---
+    all_new_col_names = list(window_features_combined.columns)
+    logger.info(f"Added {len(all_new_col_names)} window feature columns. Filling NaNs...")
+
+    # Pre-calculate fill values for base features to avoid repeated computation
+    base_feature_fill_values = {}
+    for col in all_new_col_names:
+        base_feature = col.split('_offset_')[0]
+        if base_feature not in base_feature_fill_values and base_feature in result_df.columns:
+            if np.issubdtype(result_df[base_feature].dtype, np.integer):
+                try: fill_val = result_df[base_feature].mode()[0]; logger.debug(f"Using mode ({fill_val}) for {base_feature}")
+                except IndexError: fill_val = 0; logger.debug(f"Mode failed, using 0 for {base_feature}")
+            elif np.issubdtype(result_df[base_feature].dtype, np.floating):
+                 fill_val = result_df[base_feature].median(); logger.debug(f"Using median ({fill_val}) for {base_feature}")
+                 if pd.isna(fill_val): fill_val = 0.0; logger.debug(f"Median failed, using 0.0 for {base_feature}")
+            else: # Object or other types
+                 try: fill_val = result_df[base_feature].mode()[0]; logger.debug(f"Using mode ({fill_val}) for {base_feature}")
+                 except IndexError: fill_val = ''; logger.debug(f"Mode failed, using empty string for {base_feature}")
+            base_feature_fill_values[base_feature] = fill_val
+
+    # Fill NaNs using pre-calculated values
+    for col in all_new_col_names:
+        if col not in result_df.columns: continue # Should not happen
+
+        base_feature = col.split('_offset_')[0]
+        fill_val = base_feature_fill_values.get(base_feature, 0) # Default to 0 if base feature somehow missed
+
+        nan_count = result_df[col].isna().sum()
+        if nan_count > 0:
+             result_df[col].fillna(fill_val, inplace=True)
+             # logger.debug(f"Filled {nan_count} NaNs in '{col}' with {fill_val}.")
+
+
+    logger.info("Window feature creation and NaN filling complete (Optimized).")
+    # Concat generally produces a non-fragmented frame, but a copy ensures it
+    # return result_df.copy() # Optionally add copy here for absolute certainty
     return result_df
+
+# --- Main Processing Function ---
 
 def process_features(df: pd.DataFrame, config: Dict[str, Any]) -> pd.DataFrame:
     """
-    Process features with appropriate error handling and fallbacks.
-    
+    Processes features: cleaning, deriving features, adding window features.
+
     Args:
-        df: Input DataFrame with raw protein data
-        config: Configuration dictionary
-        
+        df: Input DataFrame with raw protein data.
+        config: Configuration dictionary.
+
     Returns:
-        DataFrame with processed features
+        DataFrame with processed features ready for filtering/splitting.
     """
     try:
-        # Start with basic feature processing
-        processed_df = clean_data(df)
-        
-        # Add protein size if not present
-        if "protein_size" not in processed_df.columns:
-            processed_df["protein_size"] = processed_df.groupby("domain_id")["resid"].transform("count")
-        
-        # Ensure target column is numeric
-        rmsf_col = config["dataset"]["target"]
-        if rmsf_col in processed_df.columns:
-            processed_df[rmsf_col] = pd.to_numeric(processed_df[rmsf_col], errors='coerce').fillna(0.0)
+        logger.info(f"Starting feature processing for DataFrame with shape {df.shape}.")
+        # 1. Basic Cleaning
+        cleaned_df = clean_data(df)
+
+        # 2. Add Derived Features (Encodings, Normalizations)
+        derived_df = _add_derived_features(cleaned_df)
+
+        # 3. Add Protein Size (if necessary and possible)
+        if "protein_size" not in derived_df.columns and 'domain_id' in derived_df.columns and 'resid' in derived_df.columns:
+            logger.debug("Calculating 'protein_size'...")
+            derived_df["protein_size"] = derived_df.groupby("domain_id")["resid"].transform("count")
+        elif "protein_size" not in derived_df.columns:
+             logger.warning("Cannot calculate 'protein_size': missing 'domain_id' or 'resid'.")
+
+        # 4. Ensure Target Column is Numeric and filled
+        target_col = config["dataset"]["target"] # Already templated by load_config
+        if target_col in derived_df.columns:
+            initial_nan_count = derived_df[target_col].isna().sum()
+            derived_df[target_col] = pd.to_numeric(derived_df[target_col], errors='coerce')
+            # Fill NaNs in target with 0.0 - Check if this is appropriate for the task!
+            # Alternatively, drop rows with NaN target: derived_df.dropna(subset=[target_col], inplace=True)
+            fill_target_val = 0.0
+            final_nan_count = derived_df[target_col].isna().sum()
+            if final_nan_count > 0:
+                derived_df[target_col].fillna(fill_target_val, inplace=True)
+                logger.warning(f"Filled {final_nan_count} NaN values in target column '{target_col}' with {fill_target_val}.")
+            elif initial_nan_count > 0 and final_nan_count == 0: # Only log if NaNs were actually present and filled
+                 logger.debug(f"NaNs in target column '{target_col}' handled (filled/coerced).")
+
         else:
-            logger.warning(f"Target column '{rmsf_col}' not found in data")
-        
-        # Filter features based on config
+            logger.error(f"Target column '{target_col}' not found in data after cleaning/deriving features!")
+            # Depending on requirements, either raise an error or return the df as is
+            raise ValueError(f"Target column '{target_col}' missing.")
+
+        # 5. Identify Active Features for Windowing (based on config *after* derivation)
         feature_config = config["dataset"]["features"]
-        use_features = feature_config.get("use_features", {})
-        
-        active_features = []
-        for feature, enabled in use_features.items():
-            if enabled and feature in processed_df.columns:
-                active_features.append(feature)
-            elif enabled and feature not in processed_df.columns:
-                logger.warning(f"Feature '{feature}' is enabled but not found in data")
-        
-        # Add window features if enabled
+        use_features_config = feature_config.get("use_features", {})
+        active_features_for_windowing = []
+        for feature, enabled in use_features_config.items():
+            # Check if feature exists *now* (could be derived) and is enabled
+            if enabled and feature in derived_df.columns:
+                active_features_for_windowing.append(feature)
+            elif enabled and feature not in derived_df.columns:
+                logger.warning(f"Feature '{feature}' is enabled but not found after deriving features.")
+
+        # 6. Add Window Features (using optimized method)
         window_config = feature_config.get("window", {})
+        processed_df = derived_df # Start with the derived features df
         if window_config.get("enabled", False):
             window_size = window_config.get("size", 3)
-            processed_df = create_window_features(processed_df, window_size, active_features)
-        
+            if window_size > 0 and active_features_for_windowing:
+                 processed_df = create_window_features_optimized(
+                     processed_df, window_size, active_features_for_windowing
+                 )
+            else:
+                 logger.warning("Windowing enabled but size <= 0 or no active features found. Skipping.")
+                 processed_df = processed_df.copy() # Ensure consistency by returning a copy
+        else:
+             processed_df = processed_df.copy() # Return a copy even if windowing disabled
+
+        logger.info(f"Feature processing complete. Final shape: {processed_df.shape}")
         return processed_df
-    
+
     except Exception as e:
-        # Log error and return original dataframe if processing fails
-        logger.error(f"Feature processing failed: {e}")
-        return df
+        logger.exception(f"Feature processing failed catastrophically: {e}")
+        # Return a copy of the original DataFrame on error to prevent side effects
+        return df.copy()
+
+
+# --- Data Preparation for Models ---
 
 def prepare_data_for_model(
-    df: pd.DataFrame, 
+    df: pd.DataFrame,
     config: Dict[str, Any],
     include_target: bool = True
 ) -> Tuple[np.ndarray, Optional[np.ndarray], List[str]]:
     """
-    Prepare final data matrices for model training/prediction.
-    
+    Prepares final data matrices (X, y) and feature names for model input.
+
+    Selects features based on config, including generated window features.
+
     Args:
-        df: Processed DataFrame with features
-        config: Configuration dictionary
-        include_target: Whether to include target variable in output
-        
+        df: Processed DataFrame containing all potential features.
+        config: Configuration dictionary.
+        include_target: Whether to include the target variable (y) in the output.
+
     Returns:
-        Tuple of (X, y, feature_names) where y is None if include_target is False
+        Tuple containing:
+        - X (np.ndarray): Feature matrix.
+        - y (Optional[np.ndarray]): Target vector (or None if include_target=False).
+        - feature_names (List[str]): List of names for columns in X.
+
+    Raises:
+        ValueError: If the target column is missing when include_target is True,
+                    or if no valid features are selected.
     """
-    # Get active features
+    logger.debug("Preparing data for model...")
     feature_config = config["dataset"]["features"]
-    use_features = feature_config.get("use_features", {})
-    
-    active_features = []
-    for feature, enabled in use_features.items():
-        if enabled and feature in df.columns:
-            active_features.append(feature)
-    
-    # Add window features if enabled
+    use_features_config = feature_config.get("use_features", {})
     window_config = feature_config.get("window", {})
-    if window_config.get("enabled", False):
-        window_cols = [col for col in df.columns if "_offset_" in col]
-        active_features.extend(window_cols)
-    
-    # Ensure all required features exist
-    missing_features = [f for f in active_features if f not in df.columns]
-    if missing_features:
-        logger.warning(f"Missing features: {missing_features}")
-        active_features = [f for f in active_features if f in df.columns]
-    
-    # Prepare feature matrix
-    X = df[active_features].values
-    
-    # Prepare target vector if needed
+    window_enabled = window_config.get("enabled", False)
+    window_size = window_config.get("size", 0)
+
+    # 1. Determine base features enabled in config
+    base_features_enabled = {
+        feature for feature, enabled in use_features_config.items()
+        if enabled and feature in df.columns
+    }
+    logger.debug(f"Base features enabled in config and present in data: {sorted(list(base_features_enabled))}")
+
+    # 2. Determine window features to include (if enabled)
+    window_feature_names = []
+    if window_enabled and window_size > 0:
+        for base_feature in base_features_enabled:
+            for offset in range(-window_size, window_size + 1):
+                if offset == 0: continue
+                col_name = f"{base_feature}_offset_{offset}"
+                if col_name in df.columns:
+                    window_feature_names.append(col_name)
+        logger.debug(f"Including {len(window_feature_names)} window features.")
+
+    # 3. Combine base and window features
+    final_feature_names = sorted(list(base_features_enabled)) + sorted(window_feature_names)
+
+    # 4. Sanity check and prepare X matrix
+    missing_final_features = [f for f in final_feature_names if f not in df.columns]
+    if missing_final_features:
+        logger.warning(f"Some selected features are missing from the final DataFrame: {missing_final_features}. They will be excluded.")
+        final_feature_names = [f for f in final_feature_names if f in df.columns]
+
+    if not final_feature_names:
+        raise ValueError("No valid features selected or available for the model.")
+
+    logger.info(f"Preparing feature matrix X with {len(final_feature_names)} columns.")
+    # Select columns and convert to NumPy, ensuring numeric types where possible
+    X_df = df[final_feature_names]
+    # Attempt conversion, coercing errors - check dtypes afterwards
+    for col in X_df.columns:
+        if X_df[col].dtype == 'object':
+             try: X_df[col] = pd.to_numeric(X_df[col], errors='coerce').fillna(0) # Fill coerced NaNs with 0
+             except ValueError: logger.warning(f"Could not convert object column '{col}' to numeric. It might cause issues.")
+        elif pd.api.types.is_bool_dtype(X_df[col].dtype):
+             X_df[col] = X_df[col].astype(int) # Convert bools to int
+
+    # Check final dtypes
+    non_numeric_cols = X_df.select_dtypes(exclude=np.number).columns
+    if len(non_numeric_cols) > 0:
+        logger.warning(f"Non-numeric columns remain in feature matrix: {list(non_numeric_cols)}. Models might fail.")
+
+    X = X_df.values
+
+    # 5. Prepare target vector y (if requested)
     y = None
     if include_target:
-        target_col = config["dataset"]["target"]
+        target_col = config["dataset"]["target"] # Assumes target name is correct
         if target_col in df.columns:
-            y = df[target_col].values
+            # Ensure target is numeric and handle potential NaNs (e.g., fill with 0 or mean)
+            y_series = pd.to_numeric(df[target_col], errors='coerce')
+            nan_count = y_series.isna().sum()
+            if nan_count > 0:
+                fill_val = 0.0 # Or calculate mean/median: y_series.mean()
+                y_series.fillna(fill_val, inplace=True)
+                logger.warning(f"Filled {nan_count} NaNs in target column '{target_col}' with {fill_val} before creating y vector.")
+            y = y_series.values
         else:
-            raise ValueError(f"Target column '{target_col}' not found in data")
-    
-    return X, y, active_features
+            raise ValueError(f"Target column '{target_col}' not found in DataFrame for y preparation.")
 
-@lru_cache(maxsize=4)
-def _cached_load_data(data_path: str) -> pd.DataFrame:
-    """Load data from file with caching."""
-    if data_path.endswith('.csv'):
-        return pd.read_csv(data_path)
-    elif data_path.endswith('.tsv'):
-        return pd.read_csv(data_path, sep='\t')
-    elif data_path.endswith('.pkl') or data_path.endswith('.pickle'):
-        return pd.read_pickle(data_path)
-    else:
-        raise ValueError(f"Unsupported file format: {data_path}")
+    logger.debug(f"Data preparation complete. X shape: {X.shape}, y shape: {y.shape if y is not None else 'None'}")
+    return X, y, final_feature_names
+
+
+# --- Main Loading and Processing Function ---
 
 def load_and_process_data(
     data_path: Optional[str] = None,
@@ -4757,124 +5639,170 @@ def load_and_process_data(
     temperature: Optional[Union[int, str]] = None
 ) -> pd.DataFrame:
     """
-    Load and process data from file or using temperature configuration.
-    
+    Loads data, validates required columns, processes features, and filters domains.
+
+    This is the main entry point for getting processed data ready for splitting.
+
     Args:
-        data_path: Path to data file (if None, use temperature config)
-        config: Configuration dictionary
-        temperature: Optional temperature value to override config
-        
+        data_path: Path to data file (takes precedence if provided).
+        config: Configuration dictionary (required if data_path is None).
+        temperature: Optional specific temperature to load (overrides config).
+
     Returns:
-        Processed DataFrame
-        
+        Processed and filtered DataFrame.
+
     Raises:
-        FileNotFoundError: If data file not found
-        ValueError: If required columns are missing
+        FileNotFoundError: If the specified data file does not exist.
+        ValueError: If config is missing when needed, or required columns are absent.
     """
+    if not config:
+         # Allow loading without config for basic preprocessing, but log heavily
+         if data_path and os.path.exists(data_path):
+              logger.warning("Configuration not provided to load_and_process_data. Performing basic loading and cleaning only.")
+              try: df = _cached_load_data(data_path); return clean_data(df)
+              except Exception as e: raise ValueError(f"Error loading data from {data_path}: {e}")
+         else:
+              raise ValueError("Config is required unless a valid data_path is provided.")
+
+    # Determine the temperature to use
+    current_temp = temperature if temperature is not None else config["temperature"]["current"]
+    current_temp_str = str(current_temp)
+    logger.info(f"Loading and processing data for temperature: {current_temp_str}")
+
+    # Load initial data
     if data_path:
-        # Check if file exists
         if not os.path.exists(data_path):
             raise FileNotFoundError(f"Data file not found: {data_path}")
-        
-        # Load data with caching
+        logger.info(f"Loading data from specified path: {data_path}")
         try:
             df = _cached_load_data(data_path)
         except Exception as e:
             raise ValueError(f"Error loading data from {data_path}: {e}")
     else:
-        # Use temperature-based loading
-        if config is None:
-            raise ValueError("Config is required when data_path is not provided")
-        
-        df = load_temperature_data(config, temperature)
-    
-    if config:
-        # Validate required columns
-        required_cols = config["dataset"]["features"]["required"]
-        missing_cols = [col for col in required_cols if col not in df.columns]
-        if missing_cols:
-            # Try to handle templated column names (e.g., rmsf_{temperature})
-            templated_cols = []
-            for col in missing_cols:
-                if "{temperature}" in col:
-                    temp = temperature or config["temperature"]["current"]
-                    templated_col = col.replace("{temperature}", str(temp))
-                    if templated_col in df.columns:
-                        templated_cols.append((col, templated_col))
-            
-            for orig_col, templated_col in templated_cols:
-                missing_cols.remove(orig_col)
-            
-            if missing_cols:
-                raise ValueError(f"Missing required columns: {missing_cols}")
-        
-        # Process features
-        processed_df = process_features(df, config)
-        
-        # Filter domains
-        filtered_df = filter_domains(processed_df, config)
-        
-        return filtered_df
+        logger.info(f"Loading data based on temperature config (T={current_temp_str}).")
+        df = load_temperature_data(config, current_temp) # Handles file finding
+
+    # --- Validation of Required Columns (after loading, before processing) ---
+    required_cols_templates = config["dataset"]["features"].get("required", [])
+    if not required_cols_templates:
+         logger.warning("No required columns specified in config.")
     else:
-        # Just clean the data if no config provided
-        return clean_data(df)
+        missing_cols = []
+        for col_template in required_cols_templates:
+            # Substitute temperature placeholder
+            col_actual = col_template.replace("{temperature}", current_temp_str)
+            if col_actual not in df.columns:
+                missing_cols.append(col_actual)
+        if missing_cols:
+            raise ValueError(f"Loaded data is missing required columns for T={current_temp_str}: {missing_cols}")
+        logger.debug("All required columns found in loaded data.")
+
+
+    # --- Process Features (Cleaning, Deriving, Windowing) ---
+    # This function now handles cleaning, derived features, and windowing internally
+    processed_df = process_features(df, config) # Pass the config which contains the correct target name
+
+
+    # --- Filter Domains ---
+    filtered_df = filter_domains(processed_df, config)
+
+    logger.info(f"Data loading and processing complete for T={current_temp_str}. Final shape: {filtered_df.shape}")
+    return filtered_df
+
+# --- Data Splitting ---
 
 def split_data(
     df: pd.DataFrame,
     config: Dict[str, Any]
 ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """
-    Split data into train, validation, and test sets.
-    Respects domain boundaries when stratify_by_domain is True.
-    
+    Splits data into train, validation, and test sets.
+
+    Supports stratified splitting by domain ID to prevent data leakage.
+
     Args:
-        df: Processed DataFrame with features
-        config: Configuration dictionary
-        
+        df: Processed DataFrame with features and target.
+        config: Configuration dictionary containing split parameters.
+
     Returns:
-        Tuple of (train_df, val_df, test_df)
+        Tuple of (train_df, val_df, test_df).
     """
-    from sklearn.model_selection import train_test_split
-    
     split_config = config["dataset"]["split"]
     test_size = split_config.get("test_size", 0.2)
-    val_size = split_config.get("validation_size", 0.15)
-    random_state = split_config.get("random_state", 42)
+    val_size = split_config.get("validation_size", 0.15) # Proportion of *original* data for validation
+    random_state = config["system"].get("random_state", 42) # Use global random state
     stratify_by_domain = split_config.get("stratify_by_domain", True)
-    
+
+    logger.info(f"Splitting data: Test={test_size*100:.1f}%, Val={val_size*100:.1f}%, Stratify by domain={stratify_by_domain}")
+
     if stratify_by_domain:
-        # Get unique domains
-        domains = df['domain_id'].unique()
-        
-        # Split domains into train/test
-        test_ratio = test_size
-        domains_train, domains_test = train_test_split(
-            domains, test_size=test_ratio, random_state=random_state
+        if 'domain_id' not in df.columns:
+            raise ValueError("Cannot stratify by domain: 'domain_id' column missing.")
+
+        unique_domains = df['domain_id'].unique()
+        n_domains = len(unique_domains)
+        logger.debug(f"Found {n_domains} unique domains for stratified splitting.")
+
+        if n_domains < 3: # Need at least one domain in each split
+             logger.warning("Too few domains for reliable stratified splitting. Falling back to random split.")
+             stratify_by_domain = False # Override stratification
+
+    if stratify_by_domain:
+        # Calculate actual validation proportion relative to the training set size
+        if (1 - test_size) <= 0: raise ValueError("test_size must be less than 1")
+        val_ratio_of_train = val_size / (1 - test_size)
+        if not (0 < val_ratio_of_train < 1):
+             raise ValueError(f"Invalid split sizes: val_size ({val_size}) must be smaller than remaining train size ({1-test_size})")
+
+        # Split domains into train+val / test
+        domains_train_val, domains_test = train_test_split(
+            unique_domains,
+            test_size=test_size,
+            random_state=random_state
         )
-        
-        # Split train domains into train/val
-        val_ratio = val_size / (1 - test_ratio)
-        domains_train_final, domains_val = train_test_split(
-            domains_train, test_size=val_ratio, random_state=random_state
+        # Split train+val domains into train / val
+        domains_train, domains_val = train_test_split(
+            domains_train_val,
+            test_size=val_ratio_of_train,
+            random_state=random_state # Use same seed for reproducibility at this stage too
         )
-        
-        # Create dataframes based on domain splits
-        train_df = df[df['domain_id'].isin(domains_train_final)].copy()
+
+        logger.debug(f"Domain split: Train={len(domains_train)}, Val={len(domains_val)}, Test={len(domains_test)}")
+
+        # Create DataFrames based on domain splits
+        train_df = df[df['domain_id'].isin(domains_train)].copy()
         val_df = df[df['domain_id'].isin(domains_val)].copy()
         test_df = df[df['domain_id'].isin(domains_test)].copy()
-    else:
-        # Regular sample-based splitting
-        # First split train/test
+
+    else: # Regular sample-based splitting (if stratification disabled or not possible)
+        logger.info("Performing random sample split (not stratified by domain).")
+         # Calculate actual validation proportion relative to the training set size
+        if (1 - test_size) <= 0: raise ValueError("test_size must be less than 1")
+        val_ratio_of_train = val_size / (1 - test_size)
+        if not (0 < val_ratio_of_train < 1):
+             raise ValueError(f"Invalid split sizes: val_size ({val_size}) must be smaller than remaining train size ({1-test_size})")
+
+        # First split into (train + val) and test
         train_val_df, test_df = train_test_split(
-            df, test_size=test_size, random_state=random_state
+            df,
+            test_size=test_size,
+            random_state=random_state
         )
-        
-        # Then split train/val
-        val_ratio = val_size / (1 - test_size)
+        # Then split (train + val) into train and val
         train_df, val_df = train_test_split(
-            train_val_df, test_size=val_ratio, random_state=random_state
+            train_val_df,
+            test_size=val_ratio_of_train,
+            random_state=random_state # Use same seed
         )
-    
+
+    logger.info(f"Split complete: Train={len(train_df)}, Val={len(val_df)}, Test={len(test_df)} rows.")
+
+    # Final check for empty splits
+    if train_df.empty or val_df.empty or test_df.empty:
+        logger.error("One or more data splits are empty! Check split sizes and data.")
+        # Depending on desired behavior, could raise error or return empty DFs
+        # raise ValueError("Empty data split generated.")
+
     return train_df, val_df, test_df
 ### Temperature Handling Files ###
 ---------------------------------------------------------
@@ -4886,96 +5814,191 @@ This package contains functions for managing and comparing protein
 flexibility predictions across multiple temperatures.
 """
 
-from flexseq.temperature.comparison import (
-    compare_temperature_predictions,
-    calculate_temperature_correlations,
-    generate_temperature_metrics
-)
+# from flexseq.temperature.comparison import (
+#     compare_temperature_predictions,
+#     calculate_temperature_correlations,
+#     generate_temperature_metrics
+# )
 ===== FILE: flexseq/temperature/comparison.py =====
-"""
-Temperature comparison functionality for the FlexSeq ML pipeline.
-
-This module provides functions for comparing protein flexibility
-predictions across multiple temperatures.
-"""
+# flexseq/temperature/comparison.py
 
 import os
 import logging
-from typing import Dict, List, Tuple, Any, Optional, Union
+from typing import Dict, List, Tuple, Any, Optional, Union, Sequence
 
 import numpy as np
 import pandas as pd
 from scipy import stats
+from sklearn.metrics import mean_squared_error, r2_score
 
 from flexseq.data.loader import load_temperature_data
+from flexseq.utils.helpers import progress_bar, ProgressCallback
+import time
 
 logger = logging.getLogger(__name__)
 
+# --- Constants for Model Comparison ---
+# Define the models we want to directly compare.
+# Assumes columns like 'neural_network_predicted', 'random_forest_predicted' exist
+# in the source all_results.csv files.
+MODELS_TO_COMPARE = ['neural_network', 'random_forest']
+
+# ============================================================================
+# FUNCTION 1: compare_temperature_predictions (MODIFIED)
+# ============================================================================
 def compare_temperature_predictions(
     predictions: Dict[Union[int, str], pd.DataFrame],
-    config: Dict[str, Any]
+    config: Dict[str, Any],
+    model_names: List[str] # Now expects a list of models
 ) -> pd.DataFrame:
     """
-    Compare predictions across temperatures.
-    
+    Compare predictions across temperatures for multiple models and merge.
+
     Args:
-        predictions: Dictionary mapping temperatures to prediction DataFrames
-        config: Configuration dictionary
-        
+        predictions: Dictionary mapping temperatures to prediction DataFrames.
+        config: Configuration dictionary.
+        model_names: List of model names to include predictions for.
+
     Returns:
-        DataFrame with combined predictions for all temperatures
+        DataFrame with actual values and predictions/errors/uncertainty
+        for all specified models across all temperatures.
     """
     if not predictions:
         raise ValueError("No predictions provided for comparison")
-    
-    # Extract and prepare dataframes for merging
+
     merged_dfs = []
-    
-    for temp, df in predictions.items():
-        # Create a subset with domain_id, resid, resname, and RMSF predictions
-        subset = df[['domain_id', 'resid', 'resname']].copy()
-        
-        # Get target column and prediction column
+    temperatures = list(predictions.keys())
+    logger.info(f"Preparing data for models {model_names} across {len(temperatures)} temps...")
+
+    # Base features common across all residues (take from first available temp df)
+    base_feature_cols = ['domain_id', 'resid', 'resname']
+    potential_common_features = ['secondary_structure_encoded', 'core_exterior_encoded', 'relative_accessibility', 'normalized_resid']
+    first_valid_df = next((df for df in predictions.values() if df is not None), None)
+    if first_valid_df is not None:
+         for feat in potential_common_features:
+              if feat in first_valid_df.columns and feat not in base_feature_cols:
+                   base_feature_cols.append(feat)
+
+    for temp in progress_bar(temperatures, desc="Preparing temperature subsets"):
+        df = predictions.get(temp) # Use .get for safety
+        if df is None or df.empty:
+            logger.warning(f"No data found for temperature {temp}. Skipping.")
+            continue
+        if not all(col in df.columns for col in ['domain_id', 'resid', 'resname']):
+             logger.warning(f"Skipping temperature {temp}: Missing essential ID columns.")
+             continue
+
+        # Start subset with base features + IDs
+        subset_cols = [col for col in base_feature_cols if col in df.columns]
+        subset = df[subset_cols].copy()
+
+        # Add actual RMSF for this temp
         target_col = f"rmsf_{temp}" if temp != "average" else "rmsf_average"
-        pred_col = f"{target_col}_predicted"
-        
+        merged_actual_col = f"actual_{temp}"
         if target_col in df.columns:
-            subset[f"actual_{temp}"] = df[target_col]
-        
-        if pred_col in df.columns:
-            subset[f"predicted_{temp}"] = df[pred_col]
-        
-        # Add uncertainty column if available
-        uncertainty_col = f"{target_col}_uncertainty"
-        if uncertainty_col in df.columns:
-            subset[f"uncertainty_{temp}"] = df[uncertainty_col]
-        
-        # Add temperature indicator
-        subset['temperature'] = temp
-        
+            subset[merged_actual_col] = df[target_col]
+        else:
+            logger.warning(f"Actual RMSF column '{target_col}' not found for temperature {temp}")
+            subset[merged_actual_col] = np.nan # Add NaN column to ensure consistency
+
+        # Add predictions, errors, uncertainty for EACH requested model
+        for model_name in model_names:
+            source_pred_col = f"{model_name}_predicted"
+            source_error_col = f"{model_name}_error"
+            source_abs_error_col = f"{model_name}_abs_error"
+            source_uncertainty_col = f"{model_name}_uncertainty"
+
+            # Define merged column names
+            merged_pred_col = f"{model_name}_pred_{temp}"
+            merged_error_col = f"{model_name}_error_{temp}"
+            merged_abs_error_col = f"{model_name}_abs_error_{temp}"
+            merged_uncertainty_col = f"{model_name}_unc_{temp}"
+
+            # Add prediction
+            if source_pred_col in df.columns:
+                subset[merged_pred_col] = df[source_pred_col]
+            else:
+                # logger.warning(f"'{source_pred_col}' not found for temp {temp}")
+                subset[merged_pred_col] = np.nan
+
+            # Add pre-calculated errors if available, otherwise calculate
+            if source_abs_error_col in df.columns:
+                subset[merged_abs_error_col] = df[source_abs_error_col]
+            elif source_pred_col in df.columns and target_col in df.columns:
+                 subset[merged_abs_error_col] = (df[source_pred_col] - df[target_col]).abs()
+            else: subset[merged_abs_error_col] = np.nan
+
+            if source_error_col in df.columns:
+                subset[merged_error_col] = df[source_error_col]
+            elif source_pred_col in df.columns and target_col in df.columns:
+                 subset[merged_error_col] = df[source_pred_col] - df[target_col]
+            else: subset[merged_error_col] = np.nan
+
+            # Add uncertainty
+            if source_uncertainty_col in df.columns:
+                subset[merged_uncertainty_col] = df[source_uncertainty_col]
+            # else: logger.debug(f"'{source_uncertainty_col}' not found for temp {temp}")
+
         merged_dfs.append(subset)
-    
-    # Combine all temperature predictions
+
     if not merged_dfs:
-        raise ValueError("No valid prediction dataframes found")
-    
-    # Find common keys for all dataframes
+        raise ValueError("No valid dataframes available after preparation for merging.")
+
+    logger.info(f"Merging dataframes for {len(merged_dfs)} temperatures...")
+    start_merge_time = time.time()
+
+    # Initialize result with the first DataFrame
     result = merged_dfs[0]
-    
-    for df in merged_dfs[1:]:
-        # Use suffixes to avoid column name conflicts
-        result = pd.merge(
-            result, df, 
-            on=['domain_id', 'resid', 'resname'], 
-            suffixes=('', '_drop')
-        )
-        
-        # Remove duplicate columns
-        drop_cols = [col for col in result.columns if col.endswith('_drop')]
-        result = result.drop(columns=drop_cols)
-    
+    # Get base feature cols again from the first df actually added
+    base_feature_cols = [col for col in base_feature_cols if col in result.columns]
+
+    # Iteratively merge the remaining DataFrames
+    for df_to_merge in progress_bar(merged_dfs[1:], desc="Merging temperature data"):
+        # Identify columns to keep from the right dataframe (only the temp-specific ones)
+        temp_specific_cols = [col for col in df_to_merge.columns if col not in base_feature_cols]
+        cols_to_merge = ['domain_id', 'resid', 'resname'] + temp_specific_cols
+
+        try:
+            # Merge only the keys and temperature-specific data
+            result = pd.merge(
+                result, df_to_merge[cols_to_merge],
+                on=['domain_id', 'resid', 'resname'],
+                how='outer',
+                suffixes=('', '_drop_right')
+            )
+            drop_cols = [col for col in result.columns if col.endswith('_drop_right')]
+            if drop_cols: result = result.drop(columns=drop_cols)
+        except Exception as e: logger.error(f"Merge step failed: {e}"); raise
+
+    merge_time = time.time() - start_merge_time
+    logger.info(f"Finished merging data in {merge_time:.2f}s. Final shape: {result.shape}")
+
+    # --- Add Model Difference Columns ---
+    logger.info("Calculating model prediction/error differences...")
+    if all(model in model_names for model in MODELS_TO_COMPARE): # Check if both models are present
+        m1, m2 = MODELS_TO_COMPARE[0], MODELS_TO_COMPARE[1]
+        for temp in temperatures:
+            pred1_col = f"{m1}_pred_{temp}"
+            pred2_col = f"{m2}_pred_{temp}"
+            abs_err1_col = f"{m1}_abs_error_{temp}"
+            abs_err2_col = f"{m2}_abs_error_{temp}"
+
+            # Calculate prediction difference if both columns exist
+            if pred1_col in result.columns and pred2_col in result.columns:
+                result[f"pred_diff_{temp}"] = result[pred1_col] - result[pred2_col]
+
+            # Calculate absolute error difference if both columns exist
+            if abs_err1_col in result.columns and abs_err2_col in result.columns:
+                result[f"abs_error_diff_{temp}"] = result[abs_err1_col] - result[abs_err2_col]
+    else:
+        logger.warning(f"Cannot calculate model differences. Required models {MODELS_TO_COMPARE} not found in input model list: {model_names}")
+
+
     return result
 
+# ============================================================================
+# FUNCTION 2: calculate_temperature_correlations (Unchanged from last version)
+# ============================================================================
 def calculate_temperature_correlations(
     combined_df: pd.DataFrame,
     temperatures: List[Union[int, str]],
@@ -4983,99 +6006,85 @@ def calculate_temperature_correlations(
 ) -> pd.DataFrame:
     """
     Calculate correlations between RMSF values at different temperatures.
-    
-    Args:
-        combined_df: DataFrame with combined predictions
-        temperatures: List of temperatures to compare
-        use_actual: Whether to use actual values (True) or predictions (False)
-        
-    Returns:
-        DataFrame with correlation matrix
+    (Function content remains the same as the last provided correct version)
     """
-    # Initialize correlation matrix
-    n_temps = len(temperatures)
-    corr_matrix = np.zeros((n_temps, n_temps))
-    
-    # Determine column prefix
     prefix = "actual_" if use_actual else "predicted_"
-    
-    # Fill correlation matrix
-    for i, temp1 in enumerate(temperatures):
+    valid_temps = [t for t in temperatures if f"{prefix}{t}" in combined_df.columns]
+    n_temps = len(valid_temps)
+    if n_temps < 2: logger.warning(f"Cannot calculate {prefix} correlations, < 2 valid temp columns."); return pd.DataFrame(index=[str(t) for t in temperatures], columns=[str(t) for t in temperatures])
+    corr_matrix = np.full((n_temps, n_temps), np.nan); temp_map = {t: i for i, t in enumerate(valid_temps)}
+    for i, temp1 in enumerate(valid_temps):
         col1 = f"{prefix}{temp1}"
-        
-        # Check if column exists
-        if col1 not in combined_df.columns:
-            logger.warning(f"Column {col1} not found, skipping correlations for {temp1}")
-            continue
-        
-        for j, temp2 in enumerate(temperatures):
-            col2 = f"{prefix}{temp2}"
-            
-            # Check if column exists
-            if col2 not in combined_df.columns:
-                logger.warning(f"Column {col2} not found, skipping correlations for {temp2}")
-                continue
-            
-            # Calculate correlation, handling missing values
-            valid_mask = ~(combined_df[col1].isna() | combined_df[col2].isna())
+        for j, temp2 in enumerate(valid_temps):
+            col2 = f"{prefix}{temp2}";
+            if i > j: continue
+            valid_mask = combined_df[col1].notna() & combined_df[col2].notna()
             if valid_mask.sum() > 1:
-                pearson_r, _ = stats.pearsonr(
-                    combined_df.loc[valid_mask, col1],
-                    combined_df.loc[valid_mask, col2]
-                )
-                corr_matrix[i, j] = pearson_r
-            else:
-                corr_matrix[i, j] = np.nan
-    
-    # Create correlation DataFrame
-    corr_df = pd.DataFrame(
-        corr_matrix,
-        index=[str(t) for t in temperatures],
-        columns=[str(t) for t in temperatures]
-    )
-    
+                try:
+                    x_vals, y_vals = combined_df.loc[valid_mask, col1], combined_df.loc[valid_mask, col2]
+                    if x_vals.nunique() > 1 and y_vals.nunique() > 1:
+                         pearson_r, _ = stats.pearsonr(x_vals, y_vals); corr_matrix[i, j] = pearson_r;
+                         if i != j: corr_matrix[j, i] = pearson_r
+                    elif i == j: corr_matrix[i, j] = 1.0
+                    else: corr_matrix[i, j] = np.nan; corr_matrix[j, i] = np.nan
+                except ValueError: corr_matrix[i, j] = np.nan; corr_matrix[j, i] = np.nan
+            elif i == j: corr_matrix[i, j] = 1.0
+        corr_matrix[i, i] = 1.0
+    corr_df = pd.DataFrame(corr_matrix, index=[str(t) for t in valid_temps], columns=[str(t) for t in valid_temps])
+    corr_df = corr_df.reindex(index=[str(t) for t in temperatures], columns=[str(t) for t in temperatures])
     return corr_df
 
+# ============================================================================
+# FUNCTION 3: generate_temperature_metrics (MODIFIED for multiple models)
+# ============================================================================
 def generate_temperature_metrics(
-    predictions: Dict[Union[int, str], Dict[str, Dict[str, float]]],
+    metrics_input: Dict[Union[int, str], Dict[str, Dict[str, float]]],
     config: Dict[str, Any]
 ) -> pd.DataFrame:
     """
     Generate metrics comparing model performance across temperatures.
-    
+
     Args:
-        predictions: Nested dict mapping temperature -> model_name -> metrics
+        metrics_input: Nested dict mapping temperature -> model_name -> metrics.
         config: Configuration dictionary
-        
+
     Returns:
         DataFrame with metrics for each model and temperature
     """
-    # Get metrics of interest
-    metrics_list = config["temperature"]["comparison"]["metrics"]
-    
-    # Create a list to store the results
+    metrics_list = config.get("temperature", {}).get("comparison", {}).get("metrics", [])
+    if not metrics_list:
+         logger.warning("No comparison metrics specified in config, using defaults.")
+         metrics_list = ['rmse', 'r2', 'pearson_correlation'] # Default
     results = []
-    
-    for temp, models in predictions.items():
-        for model_name, metrics in models.items():
-            # Create a row for each temperature/model combination
-            row = {
-                'temperature': temp,
-                'model': model_name
-            }
-            
-            # Add metrics
-            for metric in metrics_list:
-                if metric in metrics:
-                    row[metric] = metrics[metric]
-            
+    all_models = set() # Keep track of all models found
+    for temp, models_metrics in metrics_input.items():
+        for model_name, metrics in models_metrics.items():
+            all_models.add(model_name)
+            row = {'temperature': temp, 'model': model_name}
+            for metric_key in metrics_list:
+                row[metric_key] = metrics.get(metric_key, np.nan)
             results.append(row)
-    
-    # Convert to DataFrame
+    if not results:
+        logger.warning("No metrics data generated for temperature comparison.")
+        return pd.DataFrame(columns=['temperature', 'model'] + metrics_list)
     result_df = pd.DataFrame(results)
-    
-    return result_df
+    # Pivot for easier comparison (optional, depends on desired format)
+    try:
+         # Use pivot_table to handle potential missing model/temp combinations gracefully
+         pivot_df = pd.pivot_table(result_df, index='temperature', columns='model', values=metrics_list)
+         # Flatten MultiIndex columns if desired: pivot_df.columns = ['_'.join(col).strip() for col in pivot_df.columns.values]
+         # Return the pivoted table or the original long format
+         # For CSV saving, long format might be more standard. Keep original for now.
+         # return pivot_df
+         return result_df
+    except Exception as e:
+         logger.warning(f"Could not pivot metrics table: {e}. Returning long format.")
+         return result_df
 
+
+# ============================================================================
+# FUNCTION 4: analyze_temperature_effects (Unchanged from last version)
+# ============================================================================
 def analyze_temperature_effects(
     combined_df: pd.DataFrame,
     temperatures: List[Union[int, str]],
@@ -5083,281 +6092,482 @@ def analyze_temperature_effects(
 ) -> Dict[str, Any]:
     """
     Analyze how protein flexibility changes with temperature.
-    
-    Args:
-        combined_df: DataFrame with combined predictions
-        temperatures: List of temperatures to analyze
-        config: Configuration dictionary
-        
-    Returns:
-        Dictionary with analysis results
+    (Function content remains the same as the last provided correct version)
     """
-    # Only use numeric temperatures for trend analysis
-    numeric_temps = [t for t in temperatures if isinstance(t, int) or (isinstance(t, str) and t.isdigit())]
-    
-    if len(numeric_temps) < 2:
-        logger.warning("Not enough numeric temperatures for trend analysis")
-        return {}
-    
-    # Convert string temperatures to int
-    numeric_temps = [int(t) if isinstance(t, str) else t for t in numeric_temps]
-    
-    # Sort temperatures
-    numeric_temps.sort()
-    
-    # Initialize results dictionary
-    results = {
-        'linear_coefficients': {},
-        'r_squared': {},
-        'domain_trends': [],
-        'residue_outliers': []
-    }
-    
-    # Analyze per-residue trends
-    for _, residue_group in combined_df.groupby(['domain_id', 'resid']):
-        domain_id = residue_group['domain_id'].iloc[0]
-        resid = residue_group['resid'].iloc[0]
-        resname = residue_group['resname'].iloc[0]
-        
-        # Get flexibility values across temperatures
-        flex_values = []
+    numeric_temps = [t for t in temperatures if isinstance(t, (int, float)) or (isinstance(t, str) and t.isdigit())]
+    if len(numeric_temps) < 2: logger.warning("Not enough numeric temps for trend analysis"); return {}
+    numeric_temps = sorted([int(t) if isinstance(t, str) else t for t in numeric_temps]); logger.info(f"Analyzing trends across temps: {numeric_temps}")
+    results = {'domain_trends': [], 'residue_outliers': [], 'domain_stats': [], 'aa_responses': [] }; logger.info("Analyzing per-residue temperature trends...")
+    start_analysis_time = time.time(); total_residue_groups = len(combined_df[['domain_id', 'resid']].drop_duplicates())
+    grouped_residues = progress_bar(combined_df.groupby(['domain_id', 'resid']), desc="Analyzing residue trends", total=total_residue_groups)
+    all_slopes_for_stats = []
+    for (_, residue_group) in grouped_residues:
+        if residue_group.empty: continue
+        try: domain_id, resid, resname = residue_group[['domain_id', 'resid', 'resname']].iloc[0]
+        except (IndexError, KeyError): logger.warning(f"Could not extract identifiers for a residue group."); continue
+        flex_values, temps_used = [], [];
         for temp in numeric_temps:
-            col = f"actual_{temp}"
-            if col in residue_group.columns and not pd.isna(residue_group[col].iloc[0]):
-                flex_values.append(residue_group[col].iloc[0])
-            else:
-                # If missing, use predicted value if available
-                pred_col = f"predicted_{temp}"
-                if pred_col in residue_group.columns and not pd.isna(residue_group[pred_col].iloc[0]):
-                    flex_values.append(residue_group[pred_col].iloc[0])
-                else:
-                    flex_values.append(np.nan)
-        
-        # Skip if too many missing values
-        if sum(~np.isnan(flex_values)) < 2:
-            continue
-        
-        # Fit linear model
-        valid_indices = ~np.isnan(flex_values)
-        x = np.array(numeric_temps)[valid_indices]
-        y = np.array(flex_values)[valid_indices]
-        
-        if len(x) < 2:
-            continue
-        
-        # Linear regression
-        slope, intercept, r_value, p_value, std_err = stats.linregress(x, y)
-        
-        # Add result to domain trends
-        results['domain_trends'].append({
-            'domain_id': domain_id,
-            'resid': resid,
-            'resname': resname,
-            'slope': slope,
-            'intercept': intercept,
-            'r_squared': r_value**2,
-            'p_value': p_value
-        })
-        
-        # Check if this is an outlier (high slope or negative slope)
-        if slope < 0 or slope > np.nanmean([r['slope'] for r in results['domain_trends']]) + 2 * np.nanstd([r['slope'] for r in results['domain_trends']]):
-            results['residue_outliers'].append({
-                'domain_id': domain_id,
-                'resid': resid,
-                'resname': resname,
-                'slope': slope,
-                'r_squared': r_value**2,
-                'behavior': 'negative_trend' if slope < 0 else 'high_increase'
-            })
-    
-    # Calculate domain-level statistics
-    domains = combined_df['domain_id'].unique()
-    domain_stats = []
-    
-    for domain in domains:
-        domain_mask = combined_df['domain_id'] == domain
-        domain_trends = [r for r in results['domain_trends'] if r['domain_id'] == domain]
-        
-        if not domain_trends:
-            continue
-        
-        # Get average slope and r_squared for the domain
-        slopes = [r['slope'] for r in domain_trends]
-        r_squared = [r['r_squared'] for r in domain_trends]
-        
-        domain_stats.append({
-            'domain_id': domain,
-            'avg_slope': np.nanmean(slopes),
-            'std_slope': np.nanstd(slopes),
-            'avg_r_squared': np.nanmean(r_squared),
-            'num_residues': len(domain_trends),
-            'outliers': len([r for r in results['residue_outliers'] if r['domain_id'] == domain])
-        })
-    
-    # Add domain stats to results
-    results['domain_stats'] = domain_stats
-    
-    # Calculate amino acid-specific responses
-    aa_responses = []
-    
-    for resname in np.unique(combined_df['resname']):
-        resname_trends = [r for r in results['domain_trends'] if r['resname'] == resname]
-        
-        if not resname_trends:
-            continue
-        
-        # Get average slope and r_squared for this amino acid
-        slopes = [r['slope'] for r in resname_trends]
-        r_squared = [r['r_squared'] for r in resname_trends]
-        
-        aa_responses.append({
-            'resname': resname,
-            'avg_slope': np.nanmean(slopes),
-            'std_slope': np.nanstd(slopes),
-            'avg_r_squared': np.nanmean(r_squared),
-            'num_residues': len(resname_trends)
-        })
-    
-    # Add amino acid responses to results
-    results['aa_responses'] = aa_responses
-    
-    return results
+            actual_col, pred_col = f"actual_{temp}", f"predicted_{temp}" # Note: This uses the *first* model's predicted if actual is missing
+            val_to_use = np.nan
+            if actual_col in residue_group.columns and pd.notna(residue_group[actual_col].iloc[0]): val_to_use = residue_group[actual_col].iloc[0]
+            # elif pred_col in residue_group.columns and pd.notna(residue_group[pred_col].iloc[0]): val_to_use = residue_group[pred_col].iloc[0] # Decide if using predicted for trends is ok
+            if pd.notna(val_to_use): flex_values.append(val_to_use); temps_used.append(temp)
+        if len(temps_used) < 2: continue
+        x, y = np.array(temps_used), np.array(flex_values)
+        if np.all(y == y[0]) or np.all(x == x[0]): continue
+        try:
+            slope, intercept, r_value, p_value, std_err = stats.linregress(x, y)
+            if pd.isna(slope) or pd.isna(r_value): continue
+            r_squared = r_value**2
+        except ValueError: continue
+        results['domain_trends'].append({'domain_id': domain_id, 'resid': resid, 'resname': resname, 'slope': slope, 'intercept': intercept, 'r_squared': r_squared, 'p_value': p_value})
+        all_slopes_for_stats.append(slope)
+    analysis_time = time.time() - start_analysis_time; logger.info(f"Finished residue trend analysis in {analysis_time:.2f} seconds.")
+    if all_slopes_for_stats:
+         mean_slope, std_slope = np.nanmean(all_slopes_for_stats), np.nanstd(all_slopes_for_stats); upper_slope_threshold, lower_slope_threshold = mean_slope + 2 * std_slope, 0
+         for trend in results['domain_trends']:
+              slope = trend['slope']
+              if slope < lower_slope_threshold or slope > upper_slope_threshold: results['residue_outliers'].append({'domain_id': trend['domain_id'], 'resid': trend['resid'], 'resname': trend['resname'], 'slope': slope, 'r_squared': trend['r_squared'], 'behavior': 'negative_trend' if slope < 0 else 'high_increase'})
+    logger.info("Calculating domain-level trend statistics..."); unique_domains_in_trends = list(set(trend['domain_id'] for trend in results['domain_trends']))
+    for domain in progress_bar(unique_domains_in_trends, desc="Analyzing domain trends"):
+        domain_trends = [r for r in results['domain_trends'] if r['domain_id'] == domain]; slopes = [r['slope'] for r in domain_trends if pd.notna(r['slope'])]; r_squared = [r['r_squared'] for r in domain_trends if pd.notna(r['r_squared'])]
+        if not slopes: continue
+        results['domain_stats'].append({'domain_id': domain, 'avg_slope': np.nanmean(slopes), 'std_slope': np.nanstd(slopes), 'avg_r_squared': np.nanmean(r_squared), 'num_residues_analyzed': len(domain_trends), 'outliers_count': len([r for r in results['residue_outliers'] if r['domain_id'] == domain])})
+    logger.info("Calculating amino acid-specific trend statistics..."); unique_resnames_in_trends = list(set(trend['resname'] for trend in results['domain_trends']))
+    for resname in progress_bar(unique_resnames_in_trends, desc="Analyzing AA trends"):
+        resname_trends = [r for r in results['domain_trends'] if r['resname'] == resname]; slopes = [r['slope'] for r in resname_trends if pd.notna(r['slope'])]; r_squared = [r['r_squared'] for r in resname_trends if pd.notna(r['r_squared'])]
+        if not slopes: continue
+        results['aa_responses'].append({'resname': resname, 'avg_slope': np.nanmean(slopes), 'std_slope': np.nanstd(slopes), 'avg_r_squared': np.nanmean(r_squared), 'num_residues_analyzed': len(resname_trends)})
+    logger.info("Finished analyzing temperature effects."); return results
 
+# ============================================================================
+# FUNCTION 5: calculate_grouped_error_summary_by_temp (MODIFIED for multiple models)
+# ============================================================================
+def calculate_grouped_error_summary_by_temp(
+    combined_df: pd.DataFrame,
+    grouping_col: str,
+    temperatures: List[Union[int, str]],
+    model_names: List[str], # Now takes list of models
+    group_labels: Optional[Dict[Any, str]] = None
+) -> pd.DataFrame:
+    """
+    Calculates error summaries grouped by a specific column, for each temperature, FOR MULTIPLE MODELS.
+
+    Args:
+        combined_df: Merged DataFrame with actual and predicted values for multiple models.
+        grouping_col: Column name to group by.
+        temperatures: List of relevant temperatures.
+        model_names: List of model names to include summaries for.
+        group_labels: Optional mapping for group labels.
+
+    Returns:
+        DataFrame with grouped error summaries per temperature per model.
+    """
+    if grouping_col not in combined_df.columns:
+        logger.warning(f"Grouping column '{grouping_col}' not found. Cannot calculate grouped errors.")
+        return pd.DataFrame()
+
+    results = []
+    logger.info(f"Calculating error summary grouped by '{grouping_col}' per temperature for models: {model_names}...")
+
+    # Get valid temps common to all requested models (or at least one)
+    valid_temps_per_model = {model: [] for model in model_names}
+    all_valid_temps = set()
+    for temp in temperatures:
+        actual_col = f"actual_{temp}"
+        if actual_col not in combined_df.columns: continue
+        for model in model_names:
+            pred_col = f"{model}_pred_{temp}"
+            abs_error_col = f"{model}_abs_error_{temp}"
+            if pred_col in combined_df.columns and abs_error_col in combined_df.columns:
+                 if combined_df[abs_error_col].notna().any():
+                      valid_temps_per_model[model].append(temp)
+                      all_valid_temps.add(temp)
+
+    if not all_valid_temps:
+        logger.warning(f"No valid temperatures with error data found for any model. Skipping grouped summary by {grouping_col}.")
+        return pd.DataFrame()
+
+    grouped_data = progress_bar(
+        combined_df.groupby(grouping_col, observed=False, dropna=False),
+        desc=f"Processing {grouping_col} groups"
+    )
+
+    for group_val, group_df in grouped_data:
+        group_label = group_labels.get(group_val, str(group_val)) if group_labels else str(group_val)
+        count = len(group_df)
+
+        base_info = { 'group_value': group_label, 'count': count }
+
+        # Calculate metrics for each model for each valid temp
+        for model in model_names:
+            for temp in valid_temps_per_model.get(model, []): # Only loop through valid temps for this model
+                abs_error_col = f"{model}_abs_error_{temp}"
+                valid_errors = group_df[abs_error_col].dropna()
+                if not valid_errors.empty:
+                    base_info[f"{model}_mean_abs_error_{temp}"] = valid_errors.mean()
+                    base_info[f"{model}_median_abs_error_{temp}"] = valid_errors.median()
+                    base_info[f"{model}_std_abs_error_{temp}"] = valid_errors.std()
+                else:
+                    base_info[f"{model}_mean_abs_error_{temp}"] = np.nan
+                    base_info[f"{model}_median_abs_error_{temp}"] = np.nan
+                    base_info[f"{model}_std_abs_error_{temp}"] = np.nan
+
+        results.append(base_info)
+
+    if not results: logger.warning(f"No results for grouped error summary by '{grouping_col}'."); return pd.DataFrame()
+    summary_df = pd.DataFrame(results).rename(columns={'group_value': grouping_col})
+    return summary_df
+
+# ============================================================================
+# FUNCTION 6: calculate_feature_binned_errors (MODIFIED for multiple models)
+# ============================================================================
+def calculate_feature_binned_errors(
+    combined_df: pd.DataFrame,
+    feature_col: str,
+    temperatures: List[Union[int, str]],
+    model_names: List[str], # Takes list
+    n_bins: int = 10
+) -> pd.DataFrame:
+    """
+    Calculates error summaries binned by a continuous feature, for each temperature, FOR MULTIPLE MODELS.
+
+    Args:
+        combined_df: Merged DataFrame.
+        feature_col: Continuous feature column name to bin.
+        temperatures: List of relevant temperatures.
+        model_names: List of model names to include summaries for.
+        n_bins: Number of bins.
+
+    Returns:
+        DataFrame with binned error summaries per temperature per model.
+    """
+    if feature_col not in combined_df.columns: logger.warning(f"Feature '{feature_col}' not found."); return pd.DataFrame()
+    results = []
+    logger.info(f"Calculating error summary binned by '{feature_col}' for models: {model_names}...")
+
+    # Binning
+    feature_values = combined_df[feature_col].dropna()
+    if feature_values.empty or feature_values.nunique() <= 1: logger.warning(f"Not enough unique values in '{feature_col}' for binning."); return pd.DataFrame()
+    bin_col_name = f"{feature_col}_bin_temp"; df_copy = combined_df.copy() # Work on copy for bins
+    try:
+        bins, bin_edges = pd.cut(feature_values, bins=n_bins, labels=False, retbins=True, include_lowest=True, duplicates='drop')
+        df_copy[bin_col_name] = bins.reindex(df_copy.index)
+    except Exception as e: logger.error(f"Failed to create bins for '{feature_col}': {e}"); return pd.DataFrame()
+
+    # Valid temps common to all models
+    valid_temps_per_model = {model: [] for model in model_names}; all_valid_temps = set()
+    for temp in temperatures:
+        actual_col = f"actual_{temp}"
+        if actual_col not in df_copy.columns: continue
+        for model in model_names:
+             pred_col = f"{model}_pred_{temp}"
+             abs_error_col = f"{model}_abs_error_{temp}" # Need abs error column
+             if abs_error_col not in df_copy.columns: # Calculate if missing
+                  if pred_col in df_copy.columns: df_copy[abs_error_col] = (df_copy[pred_col] - df_copy[actual_col]).abs()
+                  else: df_copy[abs_error_col] = np.nan # Cannot calculate
+             if abs_error_col in df_copy.columns and df_copy[abs_error_col].notna().any():
+                  valid_temps_per_model[model].append(temp); all_valid_temps.add(temp)
+    if not all_valid_temps: logger.warning(f"No valid temps for '{feature_col}' bin summary."); return pd.DataFrame()
+
+    grouped_data = progress_bar(df_copy.groupby(bin_col_name, observed=False, dropna=False), desc=f"Processing {feature_col} bins")
+    for bin_idx, group_df in grouped_data:
+         if pd.isna(bin_idx): continue
+         bin_idx_int = int(bin_idx);
+         if bin_idx_int < 0 or bin_idx_int >= len(bin_edges) - 1: continue
+         bin_start, bin_end = bin_edges[bin_idx_int], bin_edges[bin_idx_int + 1]
+         base_info = {'feature': feature_col, 'bin_start': bin_start, 'bin_end': bin_end, 'bin_center': (bin_start + bin_end) / 2, 'count': len(group_df)}
+         for model in model_names:
+             for temp in valid_temps_per_model.get(model, []):
+                 abs_error_col = f"{model}_abs_error_{temp}"
+                 valid_errors = group_df[abs_error_col].dropna()
+                 base_info[f"{model}_mean_abs_error_{temp}"] = valid_errors.mean() if not valid_errors.empty else np.nan
+         results.append(base_info)
+
+    if not results: logger.warning(f"No results for binned error summary by '{feature_col}'."); return pd.DataFrame()
+    summary_df = pd.DataFrame(results)
+    return summary_df
+
+# ============================================================================
+# FUNCTION 7: calculate_domain_performance_by_temp (MODIFIED for multiple models)
+# ============================================================================
+def calculate_domain_performance_by_temp(
+    combined_df: pd.DataFrame,
+    temperatures: List[Union[int, str]],
+    model_names: List[str] # Takes list
+) -> pd.DataFrame:
+    """
+    Calculates performance metrics (RMSE, R2, Pearson) per domain, per temperature, FOR MULTIPLE MODELS.
+
+    Args:
+        combined_df: Merged DataFrame.
+        temperatures: List of relevant temperatures.
+        model_names: List of model names to include performance for.
+
+    Returns:
+        DataFrame with domain performance metrics per temperature per model.
+    """
+    results = []
+    logger.info(f"Calculating domain performance per temperature for models: {model_names}...")
+
+    # Get valid temps common to all models
+    valid_temps_per_model = {model: [] for model in model_names}; all_valid_temps = set()
+    for temp in temperatures:
+        actual_col = f"actual_{temp}"
+        if actual_col not in combined_df.columns: continue
+        for model in model_names:
+             pred_col = f"{model}_pred_{temp}"
+             if pred_col in combined_df.columns and combined_df[pred_col].notna().any():
+                  valid_temps_per_model[model].append(temp); all_valid_temps.add(temp)
+    if not all_valid_temps: logger.warning("No valid temps for domain performance."); return pd.DataFrame()
+
+    grouped_data = progress_bar(combined_df.groupby('domain_id', observed=False), desc="Processing domains")
+    for domain_id, domain_df in grouped_data:
+        base_info = {'domain_id': domain_id}
+        for temp in sorted(list(all_valid_temps)): # Iterate through all temps that had data for at least one model
+            actual_col = f"actual_{temp}"
+            # Calculate base metrics for this temp/domain if actual exists
+            actual_vals_temp_domain = domain_df[actual_col].dropna()
+            base_info[f'num_residues_{temp}'] = len(actual_vals_temp_domain)
+            base_info[f'mean_actual_{temp}'] = actual_vals_temp_domain.mean() if not actual_vals_temp_domain.empty else np.nan
+            base_info[f'std_actual_{temp}'] = actual_vals_temp_domain.std() if len(actual_vals_temp_domain) > 1 else 0.0
+
+            # Calculate metrics for each model *if* it has valid predictions for this temp
+            for model in model_names:
+                 if temp in valid_temps_per_model.get(model,[]):
+                      pred_col = f"{model}_pred_{temp}"
+                      temp_model_df = domain_df[[actual_col, pred_col]].dropna()
+                      y_true = temp_model_df[actual_col].values
+                      y_pred = temp_model_df[pred_col].values
+                      num_eval = len(y_true)
+
+                      rmse, r2, pearson_r = np.nan, np.nan, np.nan
+                      if num_eval > 1:
+                           try:
+                               rmse = np.sqrt(mean_squared_error(y_true, y_pred))
+                               if np.var(y_true) > 1e-9 and np.var(y_pred) > 1e-9:
+                                    r2 = r2_score(y_true, y_pred)
+                                    pearson_r, _ = stats.pearsonr(y_true, y_pred)
+                                    if pd.isna(pearson_r): pearson_r = 0.0
+                               else:
+                                    r2 = 0.0 if np.allclose(y_true, y_pred) else np.nan
+                                    pearson_r = 1.0 if np.allclose(y_true, y_pred) else np.nan
+                           except ValueError: pass
+                      elif num_eval == 1: rmse = np.abs(y_true[0] - y_pred[0])
+
+                      base_info[f"{model}_rmse_{temp}"] = rmse
+                      base_info[f"{model}_r2_{temp}"] = r2
+                      base_info[f"{model}_pearson_{temp}"] = pearson_r
+                 else: # Fill with NaN if model didn't have valid data for this temp
+                      base_info[f"{model}_rmse_{temp}"] = np.nan
+                      base_info[f"{model}_r2_{temp}"] = np.nan
+                      base_info[f"{model}_pearson_{temp}"] = np.nan
+
+        results.append(base_info)
+
+    if not results: logger.warning("No domain performance results generated."); return pd.DataFrame()
+    summary_df = pd.DataFrame(results)
+    return summary_df
+
+
+# ============================================================================
+# MAIN FUNCTION: prepare_temperature_comparison_data (ENHANCED for new CSVs)
+# ============================================================================
 def prepare_temperature_comparison_data(
     config: Dict[str, Any],
-    model_name: str,
+    model_name: str, # NOTE: This argument is now less relevant, comparison uses MODELS_TO_COMPARE
     output_dir: str
-) -> Dict[str, pd.DataFrame]:
+) -> Dict[str, Optional[pd.DataFrame]]:
     """
-    Prepare data for temperature comparison visualization.
-    
+    Prepare data for temperature comparison visualization and analysis.
+    Generates multiple CSV files containing processed data suitable for figures.
+
     Args:
-        config: Configuration dictionary
-        model_name: Model name to use for prediction
-        output_dir: Output directory to save comparison data
-        
+        config: Configuration dictionary.
+        model_name: Primary model name (used for fallback/default naming if needed).
+        output_dir: Output directory to save comparison data.
+
     Returns:
-        Dictionary mapping data_name -> DataFrame
+        Dictionary mapping data_name -> DataFrame or None if generation failed.
     """
-    # Get available temperatures
-    temperatures = config["temperature"]["available"]
-    
-    # Load predictions for each temperature
-    predictions = {}
-    model_metrics = {}
-    
-    for temp in temperatures:
-        # Get temperature-specific output directory
-        temp_output_dir = os.path.join(config["paths"]["output_dir"], f"outputs_{temp}")
-        
-        # Load all results
+    # Use the hardcoded list of models to compare for this enhanced version
+    models_to_analyze = MODELS_TO_COMPARE
+    primary_model = model_name if model_name in models_to_analyze else models_to_analyze[0]
+    logger.info(f"Starting temperature comparison for models: {models_to_analyze} (Primary: {primary_model})")
+
+    start_prep_time = time.time()
+    os.makedirs(output_dir, exist_ok=True)
+
+    # --- Configurable Parameters ---
+    analysis_config = config.get("analysis", {}).get("temperature_comparison", {})
+    # Define features for automatic binning (can be customized in config)
+    default_features_to_bin = ['relative_accessibility', 'normalized_resid']
+    features_to_bin = analysis_config.get("binned_features", default_features_to_bin)
+    n_bins_for_features = analysis_config.get("n_bins", 10)
+
+    # --- Load results for each temperature ---
+    temperatures = config.get("temperature", {}).get("available", [])
+    if not temperatures: logger.error("No available temperatures defined in config."); return {}
+    predictions = {}; model_metrics_by_temp_model = {}
+    logger.info("Loading results from individual temperature runs...")
+    base_output_dir_from_config = config.get("paths", {}).get("output_dir", "./output")
+
+    # Load data and metrics for ALL specified models
+    for temp in progress_bar(temperatures, desc="Loading temperature results"):
+        temp_output_dir = os.path.join(base_output_dir_from_config, f"outputs_{temp}")
         results_path = os.path.join(temp_output_dir, "all_results.csv")
-        
-        if not os.path.exists(results_path):
-            logger.warning(f"Results file not found for temperature {temp}: {results_path}")
-            continue
-        
-        # Load predictions
-        predictions[temp] = pd.read_csv(results_path)
-        
-        # Load metrics
+        if not os.path.exists(results_path): logger.warning(f"Results file not found: {results_path}. Skipping."); continue
+        try:
+            df_temp = pd.read_csv(results_path)
+            # Basic check if essential columns are there
+            if not all(c in df_temp for c in ['domain_id', 'resid', 'resname']): continue
+            predictions[temp] = df_temp
+        except Exception as e: logger.error(f"Failed to load {results_path}: {e}"); continue
+
         metrics_path = os.path.join(temp_output_dir, "evaluation_results.csv")
-        
         if os.path.exists(metrics_path):
-            metrics_df = pd.read_csv(metrics_path, index_col=0)
-            
-            if model_name in metrics_df.index:
-                model_metrics[temp] = metrics_df.loc[model_name].to_dict()
-            else:
-                logger.warning(f"Model {model_name} not found in metrics for temperature {temp}")
-    
-    # Create combined predictions
-    combined_preds = compare_temperature_predictions(predictions, config)
-    
-    # Save combined predictions
-    combined_path = os.path.join(output_dir, "combined_predictions.csv")
-    os.makedirs(os.path.dirname(combined_path), exist_ok=True)
+             try:
+                metrics_df = pd.read_csv(metrics_path, index_col=0)
+                temp_metrics = {}
+                for model in models_to_analyze: # Load metrics for all relevant models
+                    if model in metrics_df.index:
+                        temp_metrics[model] = metrics_df.loc[model].to_dict()
+                    else: logger.warning(f"Model '{model}' not found in metrics file: {metrics_path}")
+                if temp_metrics: model_metrics_by_temp_model[temp] = temp_metrics # Store {temp: {model: {metrics}}}
+             except Exception as e: logger.error(f"Failed to load/parse {metrics_path}: {e}")
+        else: logger.warning(f"Metrics file not found: {metrics_path}")
+
+    if not predictions: logger.error("No prediction data loaded. Aborting."); return {}
+    logger.info(f"Loaded prediction data for {len(predictions)} temperatures.")
+
+    # --- Create combined predictions dataframe (includes all models) ---
+    logger.info("Creating combined predictions dataframe...")
+    # Pass the list of models we want to include
+    combined_preds = compare_temperature_predictions(predictions, config, models_to_analyze)
+
+    # --- Add explicit error columns if not already present (redundancy check) ---
+    valid_temps_present = []
+    for temp in temperatures:
+        actual_col = f"actual_{temp}"
+        if actual_col not in combined_preds.columns: continue # Skip if actual is missing
+        temp_had_valid_model_data = False
+        for model in models_to_analyze:
+            pred_col = f"{model}_pred_{temp}"
+            error_col = f"{model}_error_{temp}"
+            abs_error_col = f"{model}_abs_error_{temp}"
+            if pred_col in combined_preds.columns and combined_preds[pred_col].notna().any():
+                 temp_had_valid_model_data = True
+                 if error_col not in combined_preds.columns: combined_preds[error_col] = combined_preds[pred_col] - combined_preds[actual_col]
+                 if abs_error_col not in combined_preds.columns: combined_preds[abs_error_col] = combined_preds[error_col].abs()
+        if temp_had_valid_model_data: valid_temps_present.append(temp)
+    logger.info(f"Verified/calculated error columns for temperatures: {valid_temps_present}")
+
+    # --- Save enhanced combined predictions (now includes multiple models and differences) ---
+    combined_path = os.path.join(output_dir, "combined_predictions_models_errors_diffs.csv") # More descriptive name
+    logger.info(f"Saving combined predictions with multi-model errors/diffs to {combined_path}")
     combined_preds.to_csv(combined_path, index=False)
-    
-    # Calculate correlations
-    actual_corr = calculate_temperature_correlations(combined_preds, temperatures, use_actual=True)
-    predicted_corr = calculate_temperature_correlations(combined_preds, temperatures, use_actual=False)
-    
-    # Save correlations
-    actual_corr_path = os.path.join(output_dir, "actual_correlations.csv")
-    predicted_corr_path = os.path.join(output_dir, "predicted_correlations.csv")
-    
-    actual_corr.to_csv(actual_corr_path)
-    predicted_corr.to_csv(predicted_corr_path)
-    
-    # Generate metrics comparison
-    metrics_df = generate_temperature_metrics({'all_models': model_metrics}, config)
-    metrics_path = os.path.join(output_dir, "temperature_metrics.csv")
-    metrics_df.to_csv(metrics_path, index=False)
-    
-    # Analyze temperature effects
-    effects = analyze_temperature_effects(combined_preds, temperatures, config)
-    
-    # Save temperature effects
+    generated_data = {'combined_multi_model_predictions': combined_preds} # Store in results
+
+    # --- Calculate and save correlations (Actual vs Actual, Pred vs Pred for primary model) ---
+    logger.info("Calculating temperature correlations...")
+    actual_corr = calculate_temperature_correlations(combined_preds, valid_temps_present, use_actual=True)
+    generated_data['actual_correlations'] = actual_corr # Store DataFrame or None
+    if actual_corr is not None and not actual_corr.empty:
+        actual_corr_path = os.path.join(output_dir, "actual_correlations.csv"); logger.info(f"Saving actual correlations to {actual_corr_path}"); actual_corr.to_csv(actual_corr_path)
+
+    # Calculate predicted correlations based on the *primary* model for consistency
+    predicted_corr = calculate_temperature_correlations(combined_preds, valid_temps_present, use_actual=False) # This now uses predicted_<temp> which corresponds to primary model
+    generated_data['predicted_correlations'] = predicted_corr
+    if predicted_corr is not None and not predicted_corr.empty:
+        predicted_corr_path = os.path.join(output_dir, f"predicted_{primary_model}_correlations.csv"); logger.info(f"Saving {primary_model} predicted correlations to {predicted_corr_path}"); predicted_corr.to_csv(predicted_corr_path)
+
+    # --- Generate and save metrics comparison table (includes multiple models) ---
+    logger.info("Generating cross-temperature metrics table...")
+    metrics_comparison_df = generate_temperature_metrics(model_metrics_by_temp_model, config)
+    generated_data['temperature_metrics_multi_model'] = metrics_comparison_df
+    if not metrics_comparison_df.empty:
+        metrics_path = os.path.join(output_dir, "temperature_metrics_multi_model.csv"); logger.info(f"Saving multi-model temperature metrics table to {metrics_path}"); metrics_comparison_df.to_csv(metrics_path, index=False)
+
+    # --- Analyze and save temperature effects (based on actual/primary model predicted) ---
+    logger.info("Analyzing temperature effects...")
+    effects = analyze_temperature_effects(combined_preds, valid_temps_present, config)
+    logger.info("Saving temperature effects analysis...")
     for key, data in effects.items():
         if isinstance(data, list) and data:
-            df = pd.DataFrame(data)
-            df_path = os.path.join(output_dir, f"{key}.csv")
-            df.to_csv(df_path, index=False)
-    
-    # Prepare histogram data
+            df_effects = pd.DataFrame(data); df_path = os.path.join(output_dir, f"{key}.csv"); logger.info(f"Saving {key} to {df_path}"); df_effects.to_csv(df_path, index=False)
+            generated_data[key] = df_effects
+        # else: logger.warning(f"Skipping saving for effect '{key}'.") # Don't warn for empty lists
+
+    # --- Generate and save grouped/binned error summaries (FOR EACH MODEL) ---
+    # 1. By Amino Acid
+    aa_error_summary = calculate_grouped_error_summary_by_temp(combined_preds, 'resname', valid_temps_present, models_to_analyze)
+    generated_data['aa_error_summary_multi_model'] = aa_error_summary
+    if aa_error_summary is not None and not aa_error_summary.empty:
+        aa_path = os.path.join(output_dir, f"aa_error_summary_multi_model.csv"); logger.info(f"Saving multi-model amino acid error summary to {aa_path}"); aa_error_summary.to_csv(aa_path, index=False)
+
+    # 2. By Secondary Structure
+    if 'secondary_structure_encoded' in combined_preds.columns:
+        ss_labels = {0: 'Helix', 1: 'Sheet', 2: 'Loop/Other', -1.0: 'Unknown', np.nan: 'Unknown'} # Handle NaN explicitly
+        combined_preds['secondary_structure_encoded'].fillna(-1.0, inplace=True) # Fill NaN before grouping
+        ss_error_summary = calculate_grouped_error_summary_by_temp(combined_preds, 'secondary_structure_encoded', valid_temps_present, models_to_analyze, group_labels=ss_labels)
+        generated_data['ss_error_summary_multi_model'] = ss_error_summary
+        if ss_error_summary is not None and not ss_error_summary.empty:
+            ss_path = os.path.join(output_dir, f"ss_error_summary_multi_model.csv"); logger.info(f"Saving multi-model secondary structure error summary to {ss_path}"); ss_error_summary.to_csv(ss_path, index=False)
+    else: logger.warning("SS column not found, skipping SS error summary."); generated_data['ss_error_summary_multi_model'] = None
+
+    # 3. By Binned Features (Automatic Detection & Per Model)
+    generated_data['feature_binned_errors_multi_model'] = {}
+    potential_features = [col for col in combined_preds.columns if combined_preds[col].dtype in [np.float64, np.int64] and not any(str(t) in col for t in temperatures) and col not in ['resid', 'secondary_structure_encoded', 'core_exterior_encoded', 'resname_encoded']] # Basic heuristic
+    logger.info(f"Attempting automatic feature binning for: {potential_features}")
+    actual_features_to_bin = [f for f in features_to_bin if f in potential_features] # Use configured list if valid
+    if not actual_features_to_bin: actual_features_to_bin = [f for f in default_features_to_bin if f in potential_features] # Fallback to default if config list invalid
+    logger.info(f"Final features selected for binning: {actual_features_to_bin}")
+
+    for feature in actual_features_to_bin:
+         binned_errors = calculate_feature_binned_errors(combined_preds.copy(), feature, valid_temps_present, models_to_analyze, n_bins=n_bins_for_features)
+         generated_data['feature_binned_errors_multi_model'][feature] = binned_errors
+         if binned_errors is not None and not binned_errors.empty:
+             bin_path = os.path.join(output_dir, f"error_by_{feature}_bins_multi_model.csv"); logger.info(f"Saving binned error summary for {feature} to {bin_path}"); binned_errors.to_csv(bin_path, index=False)
+
+    # --- Generate and save domain performance by temp (FOR EACH MODEL) ---
+    domain_perf = calculate_domain_performance_by_temp(combined_preds, valid_temps_present, models_to_analyze)
+    generated_data['domain_performance_multi_model'] = domain_perf
+    if domain_perf is not None and not domain_perf.empty:
+        domain_perf_path = os.path.join(output_dir, f"domain_performance_multi_model.csv"); logger.info(f"Saving multi-model domain performance summary to {domain_perf_path}"); domain_perf.to_csv(domain_perf_path, index=False)
+
+    # --- Prepare and save histogram data (Still based on primary model for clarity) ---
     histogram_data = []
-    
-    for temp in temperatures:
-        if temp in predictions:
-            df = predictions[temp]
-            
-            # Get RMSF column
-            target_col = f"rmsf_{temp}" if temp != "average" else "rmsf_average"
-            pred_col = f"{target_col}_predicted"
-            
-            if target_col in df.columns and pred_col in df.columns:
-                # Calculate histogram
-                actual_values = df[target_col].dropna()
-                predicted_values = df[pred_col].dropna()
-                
-                if len(actual_values) > 0 and len(predicted_values) > 0:
-                    # Get histogram data
-                    actual_hist, actual_bins = np.histogram(actual_values, bins=20)
-                    predicted_hist, predicted_bins = np.histogram(predicted_values, bins=20)
-                    
-                    # Add to results
-                    for i in range(len(actual_hist)):
-                        histogram_data.append({
-                            'temperature': temp,
-                            'type': 'actual',
-                            'bin_start': actual_bins[i],
-                            'bin_end': actual_bins[i+1],
-                            'count': actual_hist[i]
-                        })
-                    
-                    for i in range(len(predicted_hist)):
-                        histogram_data.append({
-                            'temperature': temp,
-                            'type': 'predicted',
-                            'bin_start': predicted_bins[i],
-                            'bin_end': predicted_bins[i+1],
-                            'count': predicted_hist[i]
-                        })
-    
-    # Save histogram data
-    if histogram_data:
-        histogram_df = pd.DataFrame(histogram_data)
-        histogram_path = os.path.join(output_dir, "histogram_data.csv")
-        histogram_df.to_csv(histogram_path, index=False)
-    
-    return {
-        'combined_predictions': combined_preds,
-        'actual_correlations': actual_corr,
-        'predicted_correlations': predicted_corr,
-        'temperature_metrics': metrics_df,
-        'histogram_data': pd.DataFrame(histogram_data) if histogram_data else None
-    }
+    logger.info(f"Generating histogram data (using primary model: {primary_model})...")
+    all_actual_rmsf, all_predicted_rmsf = [], []
+    for temp in valid_temps_present:
+        all_actual_rmsf.extend(combined_preds[f"actual_{temp}"].dropna().tolist())
+        all_predicted_rmsf.extend(combined_preds[f"{primary_model}_pred_{temp}"].dropna().tolist())
+    if all_actual_rmsf or all_predicted_rmsf:
+        q_low = np.percentile(all_actual_rmsf + all_predicted_rmsf, 1) if (all_actual_rmsf + all_predicted_rmsf) else 0
+        q_high = np.percentile(all_actual_rmsf + all_predicted_rmsf, 99) if (all_actual_rmsf + all_predicted_rmsf) else 1
+        min_val, max_val = max(0, q_low), q_high
+        if max_val <= min_val: max_val = min_val + 1e-6
+        common_bins = np.linspace(min_val, max_val, 21)
+    else: common_bins = np.linspace(0, 1, 21)
+    for temp in progress_bar(valid_temps_present, desc="Generating histogram data"):
+        actual_col, pred_col = f"actual_{temp}", f"{primary_model}_pred_{temp}"
+        actual_values, predicted_values = combined_preds[actual_col].dropna(), combined_preds[pred_col].dropna()
+        if not actual_values.empty:
+            actual_hist, actual_bin_edges = np.histogram(actual_values, bins=common_bins)
+            for i in range(len(actual_hist)): histogram_data.append({'temperature': temp, 'type': 'actual', 'bin_start': actual_bin_edges[i], 'bin_end': actual_bin_edges[i+1], 'count': actual_hist[i]})
+        if not predicted_values.empty:
+            predicted_hist, predicted_bin_edges = np.histogram(predicted_values, bins=common_bins)
+            for i in range(len(predicted_hist)): histogram_data.append({'temperature': temp, 'type': f'predicted_{primary_model}', 'bin_start': predicted_bin_edges[i], 'bin_end': predicted_bin_edges[i+1], 'count': predicted_hist[i]})
+    generated_data['histogram_data'] = pd.DataFrame(histogram_data) if histogram_data else None
+    if generated_data['histogram_data'] is not None:
+        histogram_path = os.path.join(output_dir, "histogram_data.csv"); logger.info(f"Saving histogram data to {histogram_path}"); generated_data['histogram_data'].to_csv(histogram_path, index=False)
+    else: logger.warning("No histogram data generated.")
+
+    # --- Final Summary ---
+    prep_time = time.time() - start_prep_time
+    logger.info(f"Temperature comparison preparation finished in {prep_time:.2f} seconds.")
+    logger.info(f"Generated comparison files in: {output_dir}")
+    return generated_data
 ### Utility Files ###
 ---------------------------------------------------------
 ===== FILE: flexseq/utils/__init__.py =====
@@ -6367,6 +7577,15 @@ to be used by external visualization tools. The functions primarily save data
 in CSV format that can be visualized separately.
 """
 
+
+from scipy import stats
+
+from flexseq.data.loader import load_temperature_data
+# Add these lines:
+from flexseq.utils.helpers import progress_bar, ProgressCallback
+import time # Optional, but useful for timing sections
+
+
 import os
 import logging
 from typing import Dict, List, Tuple, Any, Optional, Union
@@ -6381,7 +7600,9 @@ import seaborn as sns
 from flexseq.utils.helpers import (
     get_temperature_color,
     make_model_color_map,
-    ensure_dir
+    ensure_dir, 
+    progress_bar, 
+    ProgressCallback
 )
 
 logger = logging.getLogger(__name__)
@@ -7838,6 +9059,14 @@ def plot_neural_network_learning_dynamics(
     
     save_plot(plt, plot_path)
     logger.info(f"Learning dynamics plot saved to {plot_path}")
+### Output Utils Files ###
+---------------------------------------------------------
+==========================================================
+Output Result Files (First 15 lines of each file)
+==========================================================
+
+Finding output result files...
+No output result files found.
 ==========================================================
 End of FlexSeq Context Document
 ==========================================================

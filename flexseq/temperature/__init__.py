@@ -5,8 +5,8 @@ This package contains functions for managing and comparing protein
 flexibility predictions across multiple temperatures.
 """
 
-from flexseq.temperature.comparison import (
-    compare_temperature_predictions,
-    calculate_temperature_correlations,
-    generate_temperature_metrics
-)
+# from flexseq.temperature.comparison import (
+#     compare_temperature_predictions,
+#     calculate_temperature_correlations,
+#     generate_temperature_metrics
+# )
